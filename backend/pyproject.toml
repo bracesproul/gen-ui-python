@@ -8,28 +8,24 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "<3.12,>=3.9.0"
-langchain-core = "^0.1.43"
+langchain-core = "^0.2.4"
 typer = ">=0.9.0,<0.10.0"
-langchain = "^0.1.16"
-langchain-openai = "^0.1.3"
+langchain = "^0.2.2"
+langchain-openai = "^0.1.8"
 pymongo = "^4.6.3"
-langchain-text-splitters = "^0.0.1"
 python-dotenv = "^1.0.1"
 motor = "^3.4.0"
-langchain-mongodb = "^0.1.3"
-langchain-anthropic = "^0.1.9"
-langchain-cohere = "^0.1.2"
-langchain-mistralai = "^0.1.2"
-langchain-google-vertexai = "^1.0.1"
-langchain-fireworks = "^0.1.2"
-langgraph = ">=0.0.38,<0.1"
-langserve = { version = "^0.1.0", extras = ["all"] }
+langgraph = "^0.0.62"
+langserve = { version = "^0.2.1", extras = ["all"] }
 fastapi = ">=0.110.2,<1"
 uvicorn = ">=0.23.2,<0.24.0"
 pydantic = ">=1.10.13,<2"
 rich = "^13.7.1"
-langchain-community = ">=0.0.34"
+langchain-community = "^0.2.3"
 unstructured = {extras = ["all-docs"], version = "^0.13.4"}
+
+[tool.poetry.scripts]
+start = "gen_ui_backend.server:start_cli"
 
 [tool.poetry.group.test]
 optional = true

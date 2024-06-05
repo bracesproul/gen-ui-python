@@ -9,7 +9,8 @@ class GithubRepoInput(BaseModel):
     repo: str = Field(..., description="The name of the repository.")
 
 @tool("github-repo", args_schema=GithubRepoInput, return_direct=True)
-def github_repo(input: GithubRepoInput) -> Union[Dict, str]:
+def github_repo(owner: str, repo: str) -> Union[Dict, str]:
+    """Get information about a GitHub repository."""
     if not os.environ.get("GITHUB_TOKEN"):
         raise ValueError("Missing GITHUB_TOKEN secret.")
     
@@ -19,14 +20,15 @@ def github_repo(input: GithubRepoInput) -> Union[Dict, str]:
         "X-GitHub-Api-Version": "2022-11-28"
     }
     
-    url = f"https://api.github.com/repos/{input.owner}/{input.repo}"
+    url = f"https://api.github.com/repos/{owner}/{repo}"
     
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         repo_data = response.json()
         return {
-            **input.dict(),
+            "owner": owner,
+            "repo": repo,
             "description": repo_data.get("description", ""),
             "stars": repo_data.get("stargazers_count", 0),
             "language": repo_data.get("language", ""),

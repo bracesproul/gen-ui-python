@@ -10,7 +10,8 @@ class WeatherInput(BaseModel):
     country: str = Field("usa", description="The two letter country abbreviation to get weather for")
 
 @tool("weather-data", args_schema=WeatherInput, return_direct=True)
-def weather_data(input: WeatherInput):
+def weather_data(city: str, state: str, country: str) -> dict:
+    """Get the current temperature for a city."""
     geocode_api_key = os.environ.get("GEOCODE_API_KEY")
     if not geocode_api_key:
         raise ValueError("Missing GEOCODE_API_KEY secret.")
