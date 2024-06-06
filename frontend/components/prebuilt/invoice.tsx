@@ -57,7 +57,7 @@ export interface InvoiceProps {
   paymentInfo?: PaymentInfo;
 }
 
-export function InvoiceLoading() {
+export function InvoiceLoading(): JSX.Element {
   return (
     <Card className="overflow-hidden w-[700px]">
       <CardHeader className="flex flex-row items-start bg-muted/50">
@@ -193,7 +193,7 @@ export function InvoiceLoading() {
   );
 }
 
-export function Invoice(props: InvoiceProps) {
+export function Invoice(props: InvoiceProps): JSX.Element {
   const [priceDetails, setPriceDetails] = useState({
     shipping: 5.0,
     tax: 0.0,

@@ -17,6 +17,36 @@ import {
 import { AIProvider } from "./client";
 import { AIMessage } from "../ai/message";
 import { CompiledStateGraph } from "@langchain/langgraph";
+import { Github, GithubLoading } from "@/components/prebuilt/github";
+import { Invoice, InvoiceLoading } from "@/components/prebuilt/invoice";
+import {
+  CurrentWeather,
+  CurrentWeatherLoading,
+} from "@/components/prebuilt/weather";
+
+type ToolComponent = {
+  loading: (props?: any) => JSX.Element;
+  final: (props?: any) => JSX.Element;
+};
+
+type ToolComponentMap = {
+  [tool: string]: ToolComponent;
+};
+
+const TOOL_COMPONENT_MAP: ToolComponentMap = {
+  "github-repo": {
+    loading: (props?: any) => <GithubLoading {...props} />,
+    final: (props?: any) => <Github {...props} />,
+  },
+  "invoice-parser": {
+    loading: (props?: any) => <InvoiceLoading {...props} />,
+    final: (props?: any) => <Invoice {...props} />,
+  },
+  "weather-data": {
+    loading: (props?: any) => <CurrentWeatherLoading {...props} />,
+    final: (props?: any) => <CurrentWeather {...props} />,
+  },
+};
 
 /**
  * Executes `streamEvents` method on a runnable
@@ -42,30 +72,52 @@ export function streamRunnableUI<RunInput, RunOutput>(
       ReturnType<typeof createStreamableUI | typeof createStreamableValue>
     > = {};
 
+    let selectedTool: ToolComponent | null = null;
+  
     for await (const streamEvent of (
       runnable as Runnable<RunInput, RunOutput>
     ).streamEvents(inputs, {
       version: "v1",
     })) {
-      const [kind, type] = streamEvent.event.split("_").slice(1);
-      if (type === "stream" && kind !== "chain") {
-        const chunk = streamEvent.data.chunk;
+      const { output } = streamEvent.data;
+      const [type] = streamEvent.event.split("_").slice(2);
 
-        if (isValidElement(chunk)) {
-          ui.append(chunk);
-        } else if ("text" in chunk && typeof chunk.text === "string") {
-          if (!callbacks[streamEvent.run_id]) {
+      if (
+        output &&
+        typeof output === "object" &&
+        type === "end" &&
+        streamEvent.name === "invoke_model"
+      ) {
+        if ("tool_calls" in output && output.tool_calls.length > 0) {
+          const toolCall = output.tool_calls[0];
+
+          selectedTool = TOOL_COMPONENT_MAP[toolCall.type] ?? null;
+          if (!selectedTool) {
+            throw new Error("Selected tool not found in tool map.");
+          }
+
+          ui.append(selectedTool.loading());
+        } else if ("result" in output && typeof output.result === "string") {
+          if (!callbacks[streamEvent.run_id] && streamEvent.name === "invoke_model") {
             // the createStreamableValue / useStreamableValue is preferred
             // as the stream events are updated immediately in the UI
             // rather than being batched by React via createStreamableUI
             const textStream = createStreamableValue();
             ui.append(<AIMessage value={textStream.value} />);
+
             callbacks[streamEvent.run_id] = textStream;
           }
+          
+          if (callbacks[streamEvent.run_id]) {
+            callbacks[streamEvent.run_id].append(output.result);
+          }
 
-          callbacks[streamEvent.run_id].append(chunk.text);
         }
+      } else if (type === "end" && streamEvent.name === "invoke_tools") {
+        const toolData = output.tool_result;
+        ui.append(selectedTool?.final(toolData));
       }
+
       lastEventValue = streamEvent;
     }
 
@@ -76,7 +128,6 @@ export function streamRunnableUI<RunInput, RunOutput>(
     Object.values(callbacks).forEach((cb) => cb.done());
     ui.done();
   })();
-
   return { ui: ui.value, lastEvent };
 }
 
@@ -109,7 +160,6 @@ export const createRunnableUI = (
   // @ts-expect-error Private field
   const runName = logStreamTracer.keyMapByRunId[config.runId];
   if (!runName) {
-    console.log("No name found for", config.runId);
     throw new Error("No run name found");
   }
 

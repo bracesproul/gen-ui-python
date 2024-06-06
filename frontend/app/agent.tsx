@@ -3,6 +3,7 @@ import "server-only";
 import { agentExecutor } from "../ai/graph";
 import { exposeEndpoints, streamRunnableUI } from "../utils/server";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
+import { RemoteRunnable } from "@langchain/core/runnables/remote";
 
 const convertChatHistoryToMessages = (
   chat_history: [role: string, content: string][],
@@ -54,6 +55,27 @@ async function processFile(input: {
   }
 }
 
+function processInputsV2(inputs: {
+  input: string;
+  chat_history: [role: string, content: string][];
+  file?: {
+    base64: string;
+    extension: string;
+  };
+}): Array<{ type: string; content: string }> {
+  const history = inputs.chat_history.map(([role, content]) => ({
+    type: role,
+    content,
+  }));
+  const humanInput = {
+    type: "human",
+    content: inputs.input,
+  };
+  return [...history, humanInput];
+}
+
+const API_URL = "http://localhost:8000/chat";
+
 async function agent(inputs: {
   input: string;
   chat_history: [role: string, content: string][];
@@ -63,9 +85,14 @@ async function agent(inputs: {
   };
 }) {
   "use server";
-  const processedInputs = await processFile(inputs);
+  const processedInputs = processInputsV2(inputs);
+  const remoteRunnable = new RemoteRunnable({
+    url: API_URL,
+  });
 
-  return streamRunnableUI(agentExecutor(), processedInputs);
+  return streamRunnableUI(remoteRunnable, {
+    input: processedInputs,
+  });
 }
 
 export const EndpointsContext = exposeEndpoints({ agent });

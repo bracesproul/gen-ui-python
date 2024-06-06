@@ -7,7 +7,7 @@ from gen_ui_backend.tools.weather import weather_data, WeatherInput
 from typing_extensions import TypedDict
 from langchain.output_parsers.openai_tools import JsonOutputToolsParser
 from langgraph.graph import StateGraph, END
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, AIMessageChunk
 from langchain.pydantic_v1 import BaseModel
 
 class GenerativeUIState(TypedDict, total=False):
@@ -30,13 +30,10 @@ def invoke_model(state: GenerativeUIState) -> GenerativeUIState:
     tools = [github_repo, invoice_parser, weather_data]
     model_with_tools = model.bind_tools(tools)
     chain = initial_prompt | model_with_tools
-    # maybe stream this result?
     result: AIMessage = chain.invoke(input=state["input"])
 
     if isinstance(result.tool_calls, list) and len(result.tool_calls) > 0:
-        print("Tool calls selected!")
         parsed_tools = tools_parser.invoke(result)
-        print(parsed_tools)
         return {
             "tool_calls": parsed_tools
         }
@@ -47,10 +44,8 @@ def invoke_model(state: GenerativeUIState) -> GenerativeUIState:
     
 def invoke_tools_or_return(state: GenerativeUIState) -> str:
     if "result" in state and isinstance(state["result"], str):
-        print("---RETURNING PLAIN TEXT---")
         return END
     elif "tool_calls" in state and isinstance(state["tool_calls"], list):
-        print("---RETURNING TOOL CALLS---")
         return "invoke_tools"
     else:
         raise ValueError("Invalid state. No result or tool calls found.")

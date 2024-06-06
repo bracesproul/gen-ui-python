@@ -11,7 +11,7 @@ export interface CurrentWeatherProps {
   state: string;
 }
 
-export function CurrentWeatherLoading() {
+export function CurrentWeatherLoading(): JSX.Element {
   return (
     <Card className="w-[325px] max-w-[325px] p-4 h-[300px] max-h-[300px] flex flex-col text-gray-50 bg-black">
       <div className="flex justify-between items-center mb-1">
@@ -35,7 +35,7 @@ export function CurrentWeatherLoading() {
   );
 }
 
-export function CurrentWeather(props: CurrentWeatherProps) {
+export function CurrentWeather(props: CurrentWeatherProps): JSX.Element {
   const currentTime = format(new Date(), "hh:mm:ss a");
   const currentDay = format(new Date(), "EEEE");
   // assume the maximum temperature is 130 and the minium is -20

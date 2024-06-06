@@ -21,7 +21,7 @@ export interface DemoGithubProps {
   language: string;
 }
 
-export function GithubLoading() {
+export function GithubLoading(): JSX.Element {
   return (
     <Card className="w-[450px]">
       <CardHeader className="grid grid-cols-[1fr_110px] items-start gap-4 space-y-0">
@@ -51,7 +51,7 @@ export function GithubLoading() {
   );
 }
 
-export function Github(props: DemoGithubProps) {
+export function Github(props: DemoGithubProps): JSX.Element {
   const currentMonth = format(new Date(), "MMMM");
   const currentYear = format(new Date(), "yyyy");
   return (
