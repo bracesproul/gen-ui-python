@@ -1,6 +1,6 @@
 import "server-only";
 
-import { agentExecutor } from "../ai/chain";
+import { agentExecutor } from "../ai/graph";
 import { exposeEndpoints, streamRunnableUI } from "../utils/server";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 
@@ -65,7 +65,7 @@ async function agent(inputs: {
   "use server";
   const processedInputs = await processFile(inputs);
 
-  return streamRunnableUI(agentExecutor, processedInputs);
+  return streamRunnableUI(agentExecutor(), processedInputs);
 }
 
 export const EndpointsContext = exposeEndpoints({ agent });

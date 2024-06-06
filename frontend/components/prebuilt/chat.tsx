@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { EndpointsContext } from "@/app/agent";
 import { useActions } from "@/utils/client";
 import { LocalContext } from "@/app/shared";
-import { AIMessageText, HumanMessageText } from "./message";
-import { useSearchParams } from "next/navigation";
-import { LoginForm } from "./auth";
+import { HumanMessageText } from "./message";
 
 export interface ChatProps {}
 
@@ -36,108 +34,14 @@ function FileUploadMessage({ file }: { file: File }) {
 
 export default function Chat() {
   const actions = useActions<typeof EndpointsContext>();
-  const authMessage = "You must authenticate first.";
-  const authSuccessMessage = "Successfully authenticated!";
-  const searchParams = useSearchParams();
 
   const [elements, setElements] = useState<JSX.Element[]>([]);
   const [history, setHistory] = useState<[role: string, content: string][]>([]);
   const [input, setInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<File>();
 
-  useEffect(() => {
-    const nameParam = searchParams.get("name");
-    if (!nameParam) return;
-    async function postAuthRequest() {
-      const customAuthSuccessMessage = `${authSuccessMessage} Welcome, ${nameParam}!`;
-      const newElements = [...elements];
-      const newHistory: [role: string, content: string][] = [
-        ...history,
-        ["assistant", customAuthSuccessMessage],
-      ];
-      const lastUserQuestion = history[history.length - 2]?.[1];
-
-      let base64File: string | undefined = undefined;
-      let fileExtension = selectedFile?.type.split("/")[1];
-      if (selectedFile) {
-        base64File = await convertFileToBase64(selectedFile);
-      }
-      const element = await actions.agent({
-        input: lastUserQuestion,
-        chat_history: newHistory,
-        file:
-          base64File && fileExtension
-            ? {
-                base64: base64File,
-                extension: fileExtension,
-              }
-            : undefined,
-      });
-
-      newElements.push(
-        <div
-          className="flex flex-col w-full gap-1 mt-auto"
-          key={newHistory.length}
-        >
-          <div className="flex flex-col gap-1 w-full max-w-fit mr-auto">
-            <AIMessageText content={customAuthSuccessMessage} />
-            {element.ui}
-          </div>
-        </div>,
-      );
-
-      // consume the value stream to obtain the final string value
-      // after which we can append to our chat history state
-      (async () => {
-        let lastEvent = await element.lastEvent;
-        if (typeof lastEvent === "string") {
-          setHistory([...newHistory, ["assistant", lastEvent]]);
-        }
-      })();
-
-      setElements(newElements);
-      setInput("");
-      setSelectedFile(undefined);
-    }
-    if (nameParam && history[history.length - 1]?.[1] === authMessage) {
-      postAuthRequest().then(() => {
-        // no-op
-      });
-    }
-  }, [searchParams]);
-
   async function onSubmit(input: string) {
     const newElements = [...elements];
-    const nameParam = searchParams.get("name");
-
-    if (!nameParam) {
-      newElements.push(
-        <div
-          className="flex flex-col w-full gap-1 mt-auto"
-          key={history.length}
-        >
-          {selectedFile && <FileUploadMessage file={selectedFile} />}
-          <HumanMessageText content={input} />
-          <div className="flex flex-col gap-1 w-full max-w-fit mr-auto">
-            <LoginForm />
-            <AIMessageText content={authMessage} />
-          </div>
-        </div>,
-      );
-
-      /** @TODO file should be passed here. Maybe special "file" type? */
-      setHistory((prev) => [
-        ...prev,
-        ["user", input],
-        ["assistant", authMessage],
-      ]);
-
-      setElements(newElements);
-      setInput("");
-      setSelectedFile(undefined);
-      return;
-    }
-
     let base64File: string | undefined = undefined;
     let fileExtension = selectedFile?.type.split("/")[1];
     if (selectedFile) {

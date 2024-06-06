@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
+import { InvoiceLoading, Invoice } from "@/components/prebuilt/invoice";
+import { createRunnableUI } from "@/utils/server";
+import { DynamicStructuredTool } from "@langchain/core/tools";
 
 const LineItemSchema = z.object({
   id: z
@@ -46,4 +49,16 @@ export const InvoiceSchema = z.object({
   paymentInfo: PaymentInfoSchema.optional().describe(
     "Payment information for the order",
   ),
+});
+
+export const invoiceTool = new DynamicStructuredTool({
+  name: "get_order_invoice",
+  description:
+    "A tool to fetch the invoice from an order. This should only be called if a user uploads an image/receipt of an order.",
+  schema: InvoiceSchema,
+  func: async (input, config) => {
+    const stream = createRunnableUI(config, <InvoiceLoading />);
+    stream.done(<Invoice {...input} />);
+    return JSON.stringify(input, null);
+  },
 });
