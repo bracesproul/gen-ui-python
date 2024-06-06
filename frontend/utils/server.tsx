@@ -48,6 +48,15 @@ const TOOL_COMPONENT_MAP: ToolComponentMap = {
   },
 };
 
+const TOOL_RUNNABLE_UI_MAP: Record<
+  string,
+  ReturnType<typeof createStreamableUI> | null
+> = {
+  "github-repo": null,
+  "invoice-parser": null,
+  "weather-data": null,
+};
+
 /**
  * Executes `streamEvents` method on a runnable
  * and converts the generator to a RSC friendly stream
@@ -72,8 +81,9 @@ export function streamRunnableUI<RunInput, RunOutput>(
       ReturnType<typeof createStreamableUI | typeof createStreamableValue>
     > = {};
 
-    let selectedTool: ToolComponent | null = null;
-  
+    let selectedToolComponent: ToolComponent | null = null;
+    let selectedToolUI: ReturnType<typeof createStreamableUI> | null = null;
+
     for await (const streamEvent of (
       runnable as Runnable<RunInput, RunOutput>
     ).streamEvents(inputs, {
@@ -90,15 +100,18 @@ export function streamRunnableUI<RunInput, RunOutput>(
       ) {
         if ("tool_calls" in output && output.tool_calls.length > 0) {
           const toolCall = output.tool_calls[0];
-
-          selectedTool = TOOL_COMPONENT_MAP[toolCall.type] ?? null;
-          if (!selectedTool) {
-            throw new Error("Selected tool not found in tool map.");
+          if (!selectedToolComponent && !selectedToolUI) {
+            selectedToolComponent = TOOL_COMPONENT_MAP[toolCall.type];
+            selectedToolUI = createStreamableUI(
+              selectedToolComponent.loading(),
+            );
+            ui.append(selectedToolUI?.value);
           }
-
-          ui.append(selectedTool.loading());
         } else if ("result" in output && typeof output.result === "string") {
-          if (!callbacks[streamEvent.run_id] && streamEvent.name === "invoke_model") {
+          if (
+            !callbacks[streamEvent.run_id] &&
+            streamEvent.name === "invoke_model"
+          ) {
             // the createStreamableValue / useStreamableValue is preferred
             // as the stream events are updated immediately in the UI
             // rather than being batched by React via createStreamableUI
@@ -107,15 +120,16 @@ export function streamRunnableUI<RunInput, RunOutput>(
 
             callbacks[streamEvent.run_id] = textStream;
           }
-          
+
           if (callbacks[streamEvent.run_id]) {
             callbacks[streamEvent.run_id].append(output.result);
           }
-
         }
       } else if (type === "end" && streamEvent.name === "invoke_tools") {
-        const toolData = output.tool_result;
-        ui.append(selectedTool?.final(toolData));
+        if (selectedToolUI && selectedToolComponent) {
+          const toolData = output.tool_result;
+          selectedToolUI.done(selectedToolComponent.final(toolData));
+        }
       }
 
       lastEventValue = streamEvent;
