@@ -1,7 +1,6 @@
-import "server-only";
-
-import { exposeEndpoints, streamRunnableUI } from "../utils/server";
 import { RemoteRunnable } from "@langchain/core/runnables/remote";
+import { exposeEndpoints, streamRunnableUI } from "@/utils/server";
+import "server-only";
 
 const API_URL = "http://localhost:8000/chat";
 
@@ -16,7 +15,7 @@ async function agent(inputs: {
   "use server";
   const remoteRunnable = new RemoteRunnable({
     url: API_URL,
-  });
+  })
 
   return streamRunnableUI(remoteRunnable, {
     input: [

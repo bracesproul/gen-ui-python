@@ -1,6 +1,6 @@
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI  # type: ignore
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langserve import add_routes
 
@@ -11,12 +11,13 @@ from gen_ui_backend.types import ChatInputType
 load_dotenv()
 
 
-def start_cli() -> None:
+def start() -> None:
     app = FastAPI(
         title="Gen UI Backend",
         version="1.0",
         description="A simple api server using Langchain's Runnable interfaces",
     )
+
     # Configure CORS
     origins = [
         "http://localhost",

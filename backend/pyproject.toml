@@ -25,7 +25,7 @@ langchain-community = "^0.2.3"
 unstructured = {extras = ["all-docs"], version = "^0.13.4"}
 
 [tool.poetry.scripts]
-start = "gen_ui_backend.server:start_cli"
+start = "gen_ui_backend.server:start"
 
 [tool.poetry.group.test]
 optional = true

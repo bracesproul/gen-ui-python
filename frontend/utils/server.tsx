@@ -1,20 +1,14 @@
 import "server-only";
-
-import { ReactNode } from "react";
-import { createStreamableUI, createStreamableValue } from "ai/rsc";
-import {
-  Runnable,
-} from "@langchain/core/runnables";
-import { StreamEvent } from "@langchain/core/tracers/log_stream";
 import { AIProvider } from "./client";
-import { AIMessage } from "../ai/message";
+import { ReactNode } from "react";
+import { Runnable } from "@langchain/core/runnables";
 import { CompiledStateGraph } from "@langchain/langgraph";
-import { Github, GithubLoading } from "@/components/prebuilt/github";
-import { Invoice, InvoiceLoading } from "@/components/prebuilt/invoice";
-import {
-  CurrentWeather,
-  CurrentWeatherLoading,
-} from "@/components/prebuilt/weather";
+import { createStreamableUI, createStreamableValue } from "ai/rsc";
+import { StreamEvent } from "@langchain/core/tracers/log_stream";
+import { GithubLoading, Github } from "@/components/prebuilt/github";
+import { InvoiceLoading, Invoice } from "@/components/prebuilt/invoice";
+import { CurrentWeatherLoading, CurrentWeather } from "@/components/prebuilt/weather";
+import { AIMessage } from "@/ai/message";
 
 type ToolComponent = {
   loading: (props?: any) => JSX.Element;
@@ -159,7 +153,24 @@ export function streamRunnableUI<RunInput, RunOutput>(
     Object.values(callbacks).forEach((cb) => cb.done());
     ui.done();
   })();
+
   return { ui: ui.value, lastEvent };
+}
+
+/**
+ * Polyfill to emulate the upcoming Promise.withResolvers
+ */
+export function withResolvers<T>() {
+  let resolve: (value: T) => void;
+  let reject: (reason?: any) => void;
+
+  const innerPromise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  // @ts-expect-error
+  return [innerPromise, resolve, reject] as const;
 }
 
 /**
@@ -182,20 +193,4 @@ export function exposeEndpoints<T extends Record<string, unknown>>(
   return async function AI(props: { children: ReactNode }) {
     return <AIProvider actions={actions}>{props.children}</AIProvider>;
   };
-}
-
-/**
- * Polyfill to emulate the upcoming Promise.withResolvers
- */
-export function withResolvers<T>() {
-  let resolve: (value: T) => void;
-  let reject: (reason?: any) => void;
-
-  const innerPromise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  // @ts-expect-error
-  return [innerPromise, resolve, reject] as const;
 }
