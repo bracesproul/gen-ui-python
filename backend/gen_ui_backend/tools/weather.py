@@ -1,14 +1,20 @@
-from typing import Optional
-from langchain.pydantic_v1 import BaseModel, Field
 import os
+from typing import Optional
+
 import requests
+from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
 
 class WeatherInput(BaseModel):
     city: str = Field(..., description="The city name to get weather for")
-    state: str = Field(..., description="The two letter state abbreviation to get weather for")
-    country: Optional[str] = Field("usa", description="The two letter country abbreviation to get weather for")
+    state: str = Field(
+        ..., description="The two letter state abbreviation to get weather for"
+    )
+    country: Optional[str] = Field(
+        "usa", description="The two letter country abbreviation to get weather for"
+    )
+
 
 @tool("weather-data", args_schema=WeatherInput, return_direct=True)
 def weather_data(city: str, state: str, country: str = "usa") -> dict:
