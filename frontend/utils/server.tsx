@@ -2,16 +2,18 @@ import "server-only";
 
 import { ReactNode, isValidElement } from "react";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
-import { Runnable, RunnableConfig, RunnableLambda } from "@langchain/core/runnables";
+import {
+  Runnable,
+  RunnableConfig,
+  RunnableLambda,
+} from "@langchain/core/runnables";
 import {
   CallbackManagerForToolRun,
   CallbackManagerForRetrieverRun,
   CallbackManagerForChainRun,
   CallbackManagerForLLMRun,
 } from "@langchain/core/callbacks/manager";
-import {
-  StreamEvent,
-} from "@langchain/core/tracers/log_stream";
+import { StreamEvent } from "@langchain/core/tracers/log_stream";
 import { AIProvider } from "./client";
 import { AIMessage } from "../ai/message";
 import { CompiledStateGraph } from "@langchain/langgraph";
@@ -44,15 +46,6 @@ const TOOL_COMPONENT_MAP: ToolComponentMap = {
     loading: (props?: any) => <CurrentWeatherLoading {...props} />,
     final: (props?: any) => <CurrentWeather {...props} />,
   },
-};
-
-const TOOL_RUNNABLE_UI_MAP: Record<
-  string,
-  ReturnType<typeof createStreamableUI> | null
-> = {
-  "github-repo": null,
-  "invoice-parser": null,
-  "weather-data": null,
 };
 
 /**
@@ -92,12 +85,15 @@ export function streamRunnableUI<RunInput, RunOutput>(
       const { output, chunk } = streamEvent.data;
       const [type] = streamEvent.event.split("_").slice(2);
 
-      if (type === "end" && output && typeof output === "object") {
-        if (
-          streamEvent.name === "invoke_model" &&
-          "tool_calls" in output &&
-          output.tool_calls.length > 0
-        ) {
+      /**
+       * Handles the 'invoke_model' event by checking for tool calls in the output.
+       * If a tool call is found and no tool component is selected yet, it sets the
+       * selected tool component based on the tool type and appends its loading state to the UI.
+       *
+       * @param output - The output object from the 'invoke_model' event
+       */
+      const handleInvokeModelEvent = (output: Record<string, any>) => {
+        if ("tool_calls" in output && output.tool_calls.length > 0) {
           const toolCall = output.tool_calls[0];
           if (!selectedToolComponent && !selectedToolUI) {
             selectedToolComponent = TOOL_COMPONENT_MAP[toolCall.type];
@@ -106,11 +102,50 @@ export function streamRunnableUI<RunInput, RunOutput>(
             );
             ui.append(selectedToolUI?.value);
           }
+        }
+      };
+
+      /**
+       * Handles the 'invoke_tools' event by updating the selected tool's UI
+       * with the final state and tool result data.
+       *
+       * @param output - The output object from the 'invoke_tools' event
+       */
+      const handleInvokeToolsEvent = (output: Record<string, any>) => {
+        if (selectedToolUI && selectedToolComponent) {
+          const toolData = output.tool_result;
+          selectedToolUI.done(selectedToolComponent.final(toolData));
+        }
+      };
+
+      /**
+       * Handles the 'on_chat_model_stream' event by creating a new text stream
+       * for the AI message if one doesn't exist for the current run ID.
+       * It then appends the chunk content to the corresponding text stream.
+       *
+       * @param streamEvent - The stream event object
+       * @param chunk - The chunk object containing the content
+       */
+      const handleChatModelStreamEvent = (
+        streamEvent: StreamEvent,
+        chunk: Record<string, any>,
+      ) => {
+        if (!callbacks[streamEvent.run_id]) {
+          const textStream = createStreamableValue();
+          ui.append(<AIMessage value={textStream.value} />);
+          callbacks[streamEvent.run_id] = textStream;
+        }
+
+        if (callbacks[streamEvent.run_id]) {
+          callbacks[streamEvent.run_id].append(chunk.content);
+        }
+      };
+
+      if (type === "end" && output && typeof output === "object") {
+        if (streamEvent.name === "invoke_model") {
+          handleInvokeModelEvent(output);
         } else if (streamEvent.name === "invoke_tools") {
-          if (selectedToolUI && selectedToolComponent) {
-            const toolData = output.tool_result;
-            selectedToolUI.done(selectedToolComponent.final(toolData));
-          }
+          handleInvokeToolsEvent(output);
         }
       }
 
@@ -119,19 +154,7 @@ export function streamRunnableUI<RunInput, RunOutput>(
         chunk &&
         typeof chunk === "object"
       ) {
-        if (!callbacks[streamEvent.run_id]) {
-          // the createStreamableValue / useStreamableValue is preferred
-          // as the stream events are updated immediately in the UI
-          // rather than being batched by React via createStreamableUI
-          const textStream = createStreamableValue();
-          ui.append(<AIMessage value={textStream.value} />);
-
-          callbacks[streamEvent.run_id] = textStream;
-        }
-
-        if (callbacks[streamEvent.run_id]) {
-          callbacks[streamEvent.run_id].append(chunk.content);
-        }
+        handleChatModelStreamEvent(streamEvent, chunk);
       }
 
       lastEventValue = streamEvent;
