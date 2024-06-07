@@ -138,11 +138,30 @@ export default function Chat() {
     // after which we can append to our chat history state
     (async () => {
       let lastEvent = await element.lastEvent;
-      if (typeof lastEvent === "string") {
+      if (Array.isArray(lastEvent)) {
+        if (lastEvent[0].invoke_model && lastEvent[0].invoke_model.result) {
+          setHistory((prev) => [
+            ...prev,
+            ["human", input],
+            ["ai", lastEvent[0].invoke_model.result],
+          ]);
+        } else if (lastEvent[1].invoke_tools) {
+          setHistory((prev) => [
+            ...prev,
+            ["human", input],
+            [
+              "ai",
+              `Tool result: ${JSON.stringify(lastEvent[1].invoke_tools.tool_result, null)}`,
+            ],
+          ]);
+        } else {
+          setHistory((prev) => [...prev, ["human", input]]);
+        }
+      } else if (lastEvent.invoke_model && lastEvent.invoke_model.result) {
         setHistory((prev) => [
           ...prev,
-          ["user", input],
-          ["assistant", lastEvent],
+          ["human", input],
+          ["ai", lastEvent.invoke_model.result],
         ]);
       }
     })();

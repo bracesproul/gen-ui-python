@@ -19,7 +19,7 @@ class GenerativeUIState(TypedDict, total=False):
     tool_result: Optional[dict]
     """The result of a tool call."""
 
-def invoke_model(state: GenerativeUIState) -> GenerativeUIState:
+def invoke_model(state: GenerativeUIState, config) -> GenerativeUIState:
     tools_parser = JsonOutputToolsParser()
     initial_prompt = ChatPromptTemplate.from_messages([
         ("system", "You are a helpful assistant. You're provided a list of tools, and an input from the user.\n" +
@@ -30,10 +30,10 @@ def invoke_model(state: GenerativeUIState) -> GenerativeUIState:
     tools = [github_repo, invoice_parser, weather_data]
     model_with_tools = model.bind_tools(tools)
     chain = initial_prompt | model_with_tools
-    result: AIMessage = chain.invoke(input=state["input"])
+    result: AIMessage = chain.invoke(state["input"], config)
 
     if isinstance(result.tool_calls, list) and len(result.tool_calls) > 0:
-        parsed_tools = tools_parser.invoke(result)
+        parsed_tools = tools_parser.invoke(result, config)
         return {
             "tool_calls": parsed_tools
         }

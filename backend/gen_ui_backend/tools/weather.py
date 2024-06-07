@@ -1,3 +1,4 @@
+from typing import Optional
 from langchain.pydantic_v1 import BaseModel, Field
 import os
 import requests
@@ -7,16 +8,16 @@ from langchain_core.tools import tool
 class WeatherInput(BaseModel):
     city: str = Field(..., description="The city name to get weather for")
     state: str = Field(..., description="The two letter state abbreviation to get weather for")
-    country: str = Field("usa", description="The two letter country abbreviation to get weather for")
+    country: Optional[str] = Field("usa", description="The two letter country abbreviation to get weather for")
 
 @tool("weather-data", args_schema=WeatherInput, return_direct=True)
-def weather_data(city: str, state: str, country: str) -> dict:
+def weather_data(city: str, state: str, country: str = "usa") -> dict:
     """Get the current temperature for a city."""
     geocode_api_key = os.environ.get("GEOCODE_API_KEY")
     if not geocode_api_key:
         raise ValueError("Missing GEOCODE_API_KEY secret.")
 
-    geocode_url = f"https://geocode.xyz/{input.city.lower()},{input.state.lower()},{input.country.lower()}?json=1&auth={geocode_api_key}"
+    geocode_url = f"https://geocode.xyz/{city.lower()},{state.lower()},{country.lower()}?json=1&auth={geocode_api_key}"
     geocode_response = requests.get(geocode_url)
     if not geocode_response.ok:
         print("No geocode data found.")
@@ -43,6 +44,8 @@ def weather_data(city: str, state: str, country: str) -> dict:
     today_forecast = periods[0]
 
     return {
-        **input.dict(),
+        "city": city,
+        "state": state,
+        "country": country,
         "temperature": today_forecast["temperature"],
     }

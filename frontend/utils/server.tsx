@@ -71,7 +71,9 @@ export function streamRunnableUI<RunInput, RunOutput>(
   inputs: RunInput,
 ) {
   const ui = createStreamableUI();
-  const [lastEvent, resolve] = withResolvers<string>();
+  const [lastEvent, resolve] = withResolvers<
+    Array<any> | Record<string, any>
+  >();
 
   (async () => {
     let lastEventValue: StreamEvent | null = null;
@@ -89,16 +91,15 @@ export function streamRunnableUI<RunInput, RunOutput>(
     ).streamEvents(inputs, {
       version: "v1",
     })) {
-      const { output } = streamEvent.data;
+      const { output, chunk } = streamEvent.data;
       const [type] = streamEvent.event.split("_").slice(2);
 
-      if (
-        output &&
-        typeof output === "object" &&
-        type === "end" &&
-        streamEvent.name === "invoke_model"
-      ) {
-        if ("tool_calls" in output && output.tool_calls.length > 0) {
+      if (type === "end" && output && typeof output === "object") {
+        if (
+          streamEvent.name === "invoke_model" &&
+          "tool_calls" in output &&
+          output.tool_calls.length > 0
+        ) {
           const toolCall = output.tool_calls[0];
           if (!selectedToolComponent && !selectedToolUI) {
             selectedToolComponent = TOOL_COMPONENT_MAP[toolCall.type];
@@ -107,28 +108,31 @@ export function streamRunnableUI<RunInput, RunOutput>(
             );
             ui.append(selectedToolUI?.value);
           }
-        } else if ("result" in output && typeof output.result === "string") {
-          if (
-            !callbacks[streamEvent.run_id] &&
-            streamEvent.name === "invoke_model"
-          ) {
-            // the createStreamableValue / useStreamableValue is preferred
-            // as the stream events are updated immediately in the UI
-            // rather than being batched by React via createStreamableUI
-            const textStream = createStreamableValue();
-            ui.append(<AIMessage value={textStream.value} />);
-
-            callbacks[streamEvent.run_id] = textStream;
-          }
-
-          if (callbacks[streamEvent.run_id]) {
-            callbacks[streamEvent.run_id].append(output.result);
+        } else if (streamEvent.name === "invoke_tools") {
+          if (selectedToolUI && selectedToolComponent) {
+            const toolData = output.tool_result;
+            selectedToolUI.done(selectedToolComponent.final(toolData));
           }
         }
-      } else if (type === "end" && streamEvent.name === "invoke_tools") {
-        if (selectedToolUI && selectedToolComponent) {
-          const toolData = output.tool_result;
-          selectedToolUI.done(selectedToolComponent.final(toolData));
+      }
+
+      if (
+        streamEvent.event === "on_chat_model_stream" &&
+        chunk &&
+        typeof chunk === "object"
+      ) {
+        if (!callbacks[streamEvent.run_id]) {
+          // the createStreamableValue / useStreamableValue is preferred
+          // as the stream events are updated immediately in the UI
+          // rather than being batched by React via createStreamableUI
+          const textStream = createStreamableValue();
+          ui.append(<AIMessage value={textStream.value} />);
+
+          callbacks[streamEvent.run_id] = textStream;
+        }
+
+        if (callbacks[streamEvent.run_id]) {
+          callbacks[streamEvent.run_id].append(chunk.content);
         }
       }
 
