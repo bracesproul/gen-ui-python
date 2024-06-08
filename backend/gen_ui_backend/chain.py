@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 
 from langchain.output_parsers.openai_tools import JsonOutputToolsParser
 from langchain_core.messages import AIMessage, HumanMessage
@@ -7,7 +7,6 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.graph.graph import CompiledGraph
-from typing_extensions import TypedDict
 
 from gen_ui_backend.tools.github import github_repo
 from gen_ui_backend.tools.invoice import invoice_parser
@@ -67,6 +66,7 @@ def invoke_tools(state: GenerativeUIState) -> GenerativeUIState:
         "invoice-parser": invoice_parser,
         "weather-data": weather_data,
     }
+
     if state["tool_calls"] is not None:
         tool = state["tool_calls"][0]
         selected_tool = tools_map[tool["type"]]
