@@ -11,7 +11,7 @@ export default function Home() {
             target="_blank"
             className="text-blue-600 hover:underline hover:underline-offset-2"
           >
-            LangChain.js 🦜🔗
+            LangChain Python 🦜🔗
           </a>
         </p>
         <Chat />
