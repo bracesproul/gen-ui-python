@@ -14,7 +14,7 @@ It comes pre-built with a few UI features which you can use to play about with g
 First, clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/bracesprou/gen-ui-python.git
+git clone https://github.com/bracesproul/gen-ui-python.git
 
 cd gen-ui-python
 ```
