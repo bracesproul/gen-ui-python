@@ -83,6 +83,8 @@ poetry run start
 
 If you're interested in ways to take this demo application further, I'd consider the following:
 
-Generating entire React components to be rendered, instead of relying on pre-built components. OR: Using the LLM to build custom components using a UI library like [Shadcn](https://ui.shadcn.com/).
-Multi-tool and component usage. Update the LangGraph agent to call multiple tools, and appending multiple different UI components to the client rendered UI.
-Generative UI outside of the chatbot window. Have the UI dynamically render in different areas on the screen. E.g a dashboard, where the components are dynamically rendered based on the LLMs output.
+- Generating entire React components to be rendered, instead of relying on pre-built components.
+- Using the LLM to build custom components using a UI library like [Shadcn](https://ui.shadcn.com/).
+- Multi-tool and component usage.
+- Update the LangGraph agent to call multiple tools, and appending multiple different UI components to the client rendered UI.
+- Generative UI outside of the chatbot window: Have the UI dynamically render in different areas on the screen. E.g a dashboard, where the components are dynamically rendered based on the LLMs output.
