@@ -6,6 +6,8 @@ import { CompiledStateGraph } from "@langchain/langgraph";
 import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import { StreamEvent } from "@langchain/core/tracers/log_stream";
 
+export const LAMBDA_STREAM_WRAPPER_NAME = "lambda_stream_wrapper";
+
 export type RunUICallbacks = Record<
   string,
   ReturnType<typeof createStreamableUI | typeof createStreamableValue>
@@ -38,6 +40,7 @@ export function streamRunnableUI<RunInput, RunOutput>(
   const [lastEvent, resolve] = withResolvers<
     Array<any> | Record<string, any>
   >();
+  let shouldRecordLastEvent = true;
 
   (async () => {
     let lastEventValue: StreamEvent | null = null;
@@ -54,12 +57,22 @@ export function streamRunnableUI<RunInput, RunOutput>(
           callbacks,
         });
       }
-      lastEventValue = streamEvent;
+      if (shouldRecordLastEvent) {
+        lastEventValue = streamEvent;
+      }
+      if (
+        streamEvent.data.chunk?.name === "LangGraph" &&
+        streamEvent.data.chunk?.event === "on_chain_end"
+      ) {
+        shouldRecordLastEvent = false;
+      }
     }
 
     // resolve the promise, which will be sent
     // to the client thanks to RSC
-    resolve(lastEventValue?.data.output);
+    const resolveValue =
+      lastEventValue?.data.output || lastEventValue?.data.chunk?.data?.output;
+    resolve(resolveValue);
     Object.values(callbacks).forEach((cb) => cb.done());
     ui.done();
   })();
