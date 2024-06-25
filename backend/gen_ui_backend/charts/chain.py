@@ -1,13 +1,11 @@
 import json
 from typing import List, Literal, Optional, TypedDict
 
-from langchain.output_parsers.openai_tools import JsonOutputToolsParser
-from langchain.pydantic_v1 import BaseModel, Field, datetime
-from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnableConfig
+from langchain_core.messages import HumanMessage
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
-from langgraph.graph import END, StateGraph
+from langgraph.graph import StateGraph
 from langgraph.graph.graph import CompiledGraph
 
 from gen_ui_backend.charts.schema import (
@@ -40,7 +38,7 @@ def format_data_display_types_and_descriptions(
     data_display_types_and_descriptions: List[DataDisplayTypeAndDescription],
 ) -> List[str]:
     return [
-        f"Data display type: {item.name}. Chart type: {item.chart_type}. Description: {item.description}"
+        f"Data display type: {item['name']}. Chart type: {item['chartType']}. Description: {item['description']}"
         for item in data_display_types_and_descriptions
     ]
 
@@ -53,19 +51,16 @@ def generate_filters(state: AgentExecutorState) -> AgentExecutorState:
                 """You are a helpful assistant. Your task is to determine the proper filters to apply, give a user input.
   The user input is in response to a 'magic filter' prompt. They expect their natural language description of the filters to be converted into a structured query.""",
             ),
-            MessagesPlaceholder("input"),
+            ("human", "{input}"),
         ]
     )
-    product_names: List[str] = list(
-        set(order.product_name.lower() for order in state.orders)
+    unique_product_names: List[str] = list(
+        set(order["productName"].lower() for order in state["orders"])
     )
-    schema = filter_schema(product_names)
-
-    model = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(
-        schema=schema
-    )
+    schema = filter_schema(unique_product_names)
+    model = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(schema)
     chain = prompt | model
-    result = chain.invoke(input=state.input)
+    result = chain.invoke(input=state["input"]["content"])
 
     return {
         "selected_filters": result,
@@ -105,15 +100,17 @@ def generate_chart_type(state: AgentExecutorState) -> AgentExecutorState:
         )
 
     model = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(
-        schema=ChartTypeSchema()
+        ChartTypeSchema
     )
     chain = prompt | model
     result = chain.invoke(
-        magic_filter_input=state.input.content,
-        selected_filters=json.dumps(state.selected_filters),
-        data_display_types_and_descriptions=format_data_display_types_and_descriptions(
-            state.display_formats
-        ),
+        input={
+            "magic_filter_input": state["input"]["content"],
+            "selected_filters": state["selected_filters"],
+            "data_display_types_and_descriptions": format_data_display_types_and_descriptions(
+                state["display_formats"]
+            ),
+        }
     )
 
     return {
@@ -151,20 +148,22 @@ def generate_data_display_format(state: AgentExecutorState) -> AgentExecutorStat
 
         display_format: str = Field(
             ...,
-            description=f"The format to display the data in. Must be one of {', '.join([item.name for item in state.display_formats])}",
+            description=f"The format to display the data in. Must be one of {', '.join([item['name'] for item in state['display_formats']])}",
         )
 
     model = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(
-        schema=DataDisplayFormatSchema()
+        DataDisplayFormatSchema
     )
     chain = prompt | model
     result = chain.invoke(
-        chart_type=state.chart_type,
-        magic_filter_input=state.input.content,
-        selected_filters=json.dumps(state.selected_filters),
-        data_display_types_and_descriptions=format_data_display_types_and_descriptions(
-            state.display_formats
-        ),
+        input={
+            "chart_type": state["chart_type"],
+            "magic_filter_input": state["input"]["content"],
+            "selected_filters": state["selected_filters"],
+            "data_display_types_and_descriptions": format_data_display_types_and_descriptions(
+                state["display_formats"]
+            ),
+        }
     )
 
     return {
@@ -173,19 +172,18 @@ def generate_data_display_format(state: AgentExecutorState) -> AgentExecutorStat
 
 
 def filter_data(state: AgentExecutorState) -> AgentExecutorState:
-    selected_filters = state.selected_filters
-    orders = state.orders
+    selected_filters = state["selected_filters"]
+    orders = state["orders"]
 
-    product_names = selected_filters.get("product_names")
-    before_date = selected_filters.get("before_date")
-    after_date = selected_filters.get("after_date")
-    min_amount = selected_filters.get("min_amount")
-    max_amount = selected_filters.get("max_amount")
-    order_state = selected_filters.get("state")
-    city = selected_filters.get("city")
-    discount = selected_filters.get("discount")
-    min_discount_percentage = selected_filters.get("min_discount_percentage")
-    status = selected_filters.get("status")
+    product_names = selected_filters.product_names
+    before_date = selected_filters.before_date
+    after_date = selected_filters.after_date
+    min_amount = selected_filters.min_amount
+    max_amount = selected_filters.max_amount
+    order_state = selected_filters.state
+    discount = selected_filters.discount
+    min_discount_percentage = selected_filters.min_discount_percentage
+    status = selected_filters.status
 
     if min_discount_percentage is not None and discount is False:
         raise ValueError(
@@ -196,27 +194,25 @@ def filter_data(state: AgentExecutorState) -> AgentExecutorState:
     for order in orders:
         is_match = True
 
-        if product_names and order.product_name.lower() not in product_names:
+        if product_names and order["productName"].lower() not in product_names:
             is_match = False
-        if before_date and order.ordered_at > before_date:
+        if before_date and order["orderedAt"] > before_date:
             is_match = False
-        if after_date and order.ordered_at < after_date:
+        if after_date and order["orderedAt"] < after_date:
             is_match = False
-        if min_amount is not None and order.amount < min_amount:
+        if min_amount is not None and order["amount"] < min_amount:
             is_match = False
-        if max_amount is not None and order.amount > max_amount:
+        if max_amount is not None and order["amount"] > max_amount:
             is_match = False
-        if order_state and order.address.state.lower() != order_state.lower():
+        if order_state and order["address"]["state"].lower() != order_state.lower():
             is_match = False
-        if city and order.address.city.lower() != city.lower():
-            is_match = False
-        if discount is not None and (order.discount is None) != discount:
+        if discount is not None and (order["discount"] is None) != discount:
             is_match = False
         if min_discount_percentage is not None and (
-            order.discount is None or order.discount < min_discount_percentage
+            order["discount"] is None or order["discount"] < min_discount_percentage
         ):
             is_match = False
-        if status and order.status.lower() != status.lower():
+        if status and order["status"].lower() != status.lower():
             is_match = False
 
         if is_match:
@@ -245,3 +241,6 @@ def create_graph() -> CompiledGraph:
 
     graph = workflow.compile()
     return graph
+
+
+graph = create_graph()

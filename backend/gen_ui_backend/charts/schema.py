@@ -1,7 +1,6 @@
-from datetime import datetime
 from typing import List, Literal, Optional
 
-from langchain.pydantic_v1 import BaseModel, Field, datetime, validator
+from langchain_core.pydantic_v1 import BaseModel, Field
 
 ChartType = Literal["bar", "line", "pie"]
 
@@ -20,8 +19,10 @@ class Address(BaseModel):
 
 
 class Order(BaseModel):
+    """CamelCase is used here to match the schema used in the frontend."""
+
     id: str = Field(..., description="A UUID for the order.")
-    product_name: str = Field(..., description="The name of the product purchased.")
+    productName: str = Field(..., description="The name of the product purchased.")
     amount: float = Field(..., description="The amount of the order.")
     discount: Optional[float] = Field(
         None,
@@ -33,18 +34,20 @@ class Order(BaseModel):
         description="The current status of the order.",
         enum=["pending", "processing", "shipped", "delivered", "cancelled", "returned"],
     )
-    ordered_at: datetime = Field(..., description="The date the order was placed.")
+    orderedAt: str = Field(
+        ..., description="The date the order was placed. Must be a valid date string."
+    )
 
 
 class Filter(BaseModel):
     product_names: Optional[List[str]] = Field(
         None, description="List of product names to filter by"
     )
-    before_date: Optional[datetime] = Field(
-        None, description="Filter orders before this date"
+    before_date: Optional[str] = Field(
+        None, description="Filter orders before this date. Must be a valid date string."
     )
-    after_date: Optional[datetime] = Field(
-        None, description="Filter orders after this date"
+    after_date: Optional[str] = Field(
+        None, description="Filter orders after this date. Must be a valid date string."
     )
     min_amount: Optional[float] = Field(None, description="Minimum order amount")
     max_amount: Optional[float] = Field(None, description="Maximum order amount")
@@ -67,15 +70,17 @@ def filter_schema(product_names: List[str]):
     product_names_as_string = ", ".join(name.lower() for name in product_names)
 
     class FilterSchema(BaseModel):
+        """Available filters to apply to orders."""
+
         product_names: Optional[List[str]] = Field(
             None,
             description=f"Filter orders by the product name. Lowercase only. MUST only be a list of the following products: {product_names_as_string}",
         )
-        before_date: Optional[datetime] = Field(
+        before_date: Optional[str] = Field(
             None,
             description="Filter orders placed before this date. Must be a valid date in the format 'YYYY-MM-DD'",
         )
-        after_date: Optional[datetime] = Field(
+        after_date: Optional[str] = Field(
             None,
             description="Filter orders placed after this date. Must be a valid date in the format 'YYYY-MM-DD'",
         )
@@ -112,30 +117,12 @@ def filter_schema(product_names: List[str]):
             ],
         )
 
-        @validator("product_names", each_item=True)
-        def validate_product_names(cls, v, values, **kwargs):
-            if v.lower() not in [name.lower() for name in product_names]:
-                raise ValueError(f"Invalid product name: {v}")
-            return v.lower()
-
-        @validator("before_date", "after_date", pre=True)
-        def parse_date(cls, v):
-            if isinstance(v, str):
-                return datetime.strptime(v, "%Y-%m-%d")
-            return v
-
-        class Config:
-            schema_extra = {
-                "description": "Available filters to apply to orders.",
-                "name": "generate_filters",
-            }
-
     return FilterSchema
 
 
 class DataDisplayTypeAndDescription(BaseModel):
     name: str = Field(..., description="The name of the data display type.")
-    chart_type: ChartType = Field(
+    chartType: ChartType = Field(
         ..., description="The type of chart which this format can be displayed on."
     )
     description: str = Field(

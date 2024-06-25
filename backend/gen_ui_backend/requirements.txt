@@ -1,0 +1,12 @@
+langchain-core==0.2.9
+typer>=0.9.0,<0.10.0
+langchain==0.2.5
+langchain-openai==0.1.9
+pymongo==4.6.3
+python-dotenv==1.0.1
+motor==3.4.0
+langgraph==0.1.1
+pydantic>=1.10.13,<2
+rich==13.7.1
+langchain-community==0.2.5
+unstructured[all-docs]==0.13.4
