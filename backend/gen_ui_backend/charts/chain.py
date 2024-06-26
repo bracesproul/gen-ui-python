@@ -49,7 +49,8 @@ def generate_filters(state: AgentExecutorState) -> AgentExecutorState:
             (
                 "system",
                 """You are a helpful assistant. Your task is to determine the proper filters to apply, give a user input.
-  The user input is in response to a 'magic filter' prompt. They expect their natural language description of the filters to be converted into a structured query.""",
+  The user input is in response to a 'magic filter' prompt. They expect their natural language description of the filters
+  to be converted into a structured query.""",
             ),
             ("human", "{input}"),
         ]

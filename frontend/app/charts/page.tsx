@@ -13,14 +13,38 @@ import {
   ChartType,
   DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP,
   constructByDateLineChartProps,
-  constructStateBarChartProps,
   constructStatusPieChartProps,
   constructTotalAmountBarChartProps,
-  constructTotalDiscountBarChartProps,
 } from "./ai/filters";
-import { XAxisFilter } from "../../components/prebuilt/filter";
 import { useSearchParams, useRouter } from "next/navigation";
 import { filterOrders } from "./ai/filters";
+
+const LOCAL_STORAGE_ORDERS_KEY = "orders";
+
+const getFiltersFromUrl = (
+  searchParams: URLSearchParams,
+  orders: Order[],
+): Partial<Filter> => {
+  const productNames = Array.from(
+    new Set<string>(orders.map(({ productName }) => productName)),
+  );
+  const possibleFilters = filterSchema(productNames);
+  const filterKeys = Object.keys(possibleFilters.shape);
+  const filters: Record<string, any> = {};
+
+  filterKeys.forEach((key) => {
+    const value = searchParams.get(key);
+    if (value) {
+      try {
+        filters[key as any] = decodeURIComponent(value);
+      } catch (error) {
+        console.error(`Error parsing URL parameter for ${key}:`, error);
+      }
+    }
+  });
+
+  return filters;
+};
 
 const SparklesIcon = () => (
   <svg
@@ -88,33 +112,6 @@ function SmartFilter(props: SmartFilterProps) {
   );
 }
 
-const LOCAL_STORAGE_ORDERS_KEY = "orders";
-
-const getFiltersFromUrl = (
-  searchParams: URLSearchParams,
-  orders: Order[],
-): Partial<Filter> => {
-  const productNames = Array.from(
-    new Set<string>(orders.map(({ productName }) => productName)),
-  );
-  const possibleFilters = filterSchema(productNames);
-  const filterKeys = Object.keys(possibleFilters.shape);
-  const filters: Record<string, any> = {};
-
-  filterKeys.forEach((key) => {
-    const value = searchParams.get(key);
-    if (value) {
-      try {
-        filters[key as any] = decodeURIComponent(value);
-      } catch (error) {
-        console.error(`Error parsing URL parameter for ${key}:`, error);
-      }
-    }
-  });
-
-  return filters;
-};
-
 function ChartContent() {
   const actions = useActions<typeof EndpointsContext>();
   const searchParams = useSearchParams();
@@ -126,6 +123,7 @@ function ChartContent() {
   const [selectedFilters, setSelectedFilters] = useState<Partial<Filter>>();
   const [selectedChartType, setSelectedChartType] = useState<ChartType>("pie");
 
+  // Load the orders from local storage or generate them if they don't exist.
   useEffect(() => {
     if (orders.length > 0) {
       return;
@@ -179,6 +177,7 @@ function ChartContent() {
     }
   }, [orders.length, searchParams, selectedChartType]);
 
+  // Update the URL with the selected filters and chart type.
   useEffect(() => {
     if (!selectedFilters) return;
 
@@ -262,56 +261,10 @@ function ChartContent() {
     setElements(newElements);
   };
 
-  const handleFilterXAxis = (key: string) => {
-    switch (key) {
-      case "totalAmount":
-        return setElements([
-          <BarChart
-            key={`manual-filter-select-${key}`}
-            {...constructTotalAmountBarChartProps(orders)}
-          />,
-        ]);
-      case "state":
-        return setElements([
-          <BarChart
-            key={`manual-filter-select-${key}`}
-            {...constructStateBarChartProps(orders)}
-          />,
-        ]);
-      case "totalDiscount":
-        return setElements([
-          <BarChart
-            key={`manual-filter-select-${key}`}
-            {...constructTotalDiscountBarChartProps(orders)}
-          />,
-        ]);
-      case "status":
-        return setElements([
-          <PieChart
-            key={`manual-filter-select-${key}`}
-            {...constructStatusPieChartProps(orders)}
-          />,
-        ]);
-      case "ordersByMonth":
-        return setElements([
-          <LineChart
-            key={`manual-filter-select-${key}`}
-            {...constructByDateLineChartProps(orders)}
-          />,
-        ]);
-      default:
-        throw new Error("Invalid key");
-    }
-  };
-
   return (
     <div className="min-w-[80vw] mx-auto">
       <LocalContext.Provider value={handleSubmitSmartFilter}>
         <div className="flex flex-row w-full gap-1 items-center justify-center px-12">
-          <XAxisFilter
-            onFilter={handleFilterXAxis}
-            keys={Object.keys(DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP)}
-          />
           <div className="ml-auto w-[300px]">
             <SmartFilter loading={loading} onSubmit={handleSubmitSmartFilter} />
           </div>
