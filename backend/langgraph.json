@@ -1,0 +1,7 @@
+{
+  "dependencies": ["./gen_ui_backend"],
+  "graphs": {
+    "gen_ui_charts": "./gen_ui_backend/charts/chain.py:graph"
+  },
+  "env": ".env"
+}
