@@ -1,4 +1,3 @@
-import json
 from typing import List, Literal, Optional, TypedDict
 
 from langchain_core.messages import HumanMessage
@@ -195,25 +194,30 @@ def filter_data(state: AgentExecutorState) -> AgentExecutorState:
     for order in orders:
         is_match = True
 
-        if product_names and order["productName"].lower() not in product_names:
+        if product_names and order.get("productName", "").lower() not in product_names:
             is_match = False
-        if before_date and order["orderedAt"] > before_date:
+        if before_date and order.get("orderedAt", "") > before_date:
             is_match = False
-        if after_date and order["orderedAt"] < after_date:
+        if after_date and order.get("orderedAt", "") < after_date:
             is_match = False
-        if min_amount is not None and order["amount"] < min_amount:
+        if min_amount is not None and order.get("amount", 0) < min_amount:
             is_match = False
-        if max_amount is not None and order["amount"] > max_amount:
+        if max_amount is not None and order.get("amount", 0) > max_amount:
             is_match = False
-        if order_state and order["address"]["state"].lower() != order_state.lower():
-            is_match = False
-        if discount is not None and (order["discount"] is None) != discount:
-            is_match = False
-        if min_discount_percentage is not None and (
-            order["discount"] is None or order["discount"] < min_discount_percentage
+        if (
+            order_state
+            and order.get("address", {}).get("state", "").lower() != order_state.lower()
         ):
             is_match = False
-        if status and order["status"].lower() != status.lower():
+        if discount is not None:
+            order_has_discount = "discount" in order and order["discount"] is not None
+            if order_has_discount != discount:
+                is_match = False
+        if min_discount_percentage is not None:
+            order_discount = order.get("discount")
+            if order_discount is None or order_discount < min_discount_percentage:
+                is_match = False
+        if status and order.get("status", "").lower() != status.lower():
             is_match = False
 
         if is_match:

@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Type
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 
@@ -66,7 +66,7 @@ class Filter(BaseModel):
     )
 
 
-def filter_schema(product_names: List[str]):
+def filter_schema(product_names: List[str]) -> Type[BaseModel]:
     product_names_as_string = ", ".join(name.lower() for name in product_names)
 
     class FilterSchema(BaseModel):

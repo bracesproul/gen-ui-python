@@ -45,18 +45,14 @@ export const DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP: {
     description:
       "Sort by total dollar amount of orders, grouping by the state the order was shipped to.",
     chartType: "bar",
-    propsFunction: (orders: Order[]) => {
-      throw new Error("Not implemented.");
-    },
+    propsFunction: constructStateBarChartProps,
   },
   totalDiscount: {
     name: "totalDiscount",
     description:
       "Show the percentage of total order amount that was discounted, and the remaining percentage that was not discounted. Group by product name.",
     chartType: "bar",
-    propsFunction: (orders: Order[]) => {
-      throw new Error("Not implemented.");
-    },
+    propsFunction: constructTotalDiscountBarChartProps,
   },
   status: {
     name: "status",
@@ -106,6 +102,86 @@ export function constructTotalAmountBarChartProps(
     ],
     layout: "horizontal",
     dataset: ordersByProduct,
+  };
+}
+
+export function constructStateBarChartProps(orders: Order[]): BarChartProps {
+  const sortedByState = orders.reduce(
+    (acc, order) => {
+      if (!acc[order.address.state]) {
+        acc[order.address.state] = [];
+      }
+      acc[order.address.state].push(order);
+      return acc;
+    },
+    {} as Record<string, Order[]>,
+  );
+  const ordersByState = Object.entries(sortedByState)
+    .map(([state, orders]) => {
+      const totalOrderAmount = orders.reduce(
+        (acc, order) => acc + order.amount,
+        0,
+      );
+      return { state, totalAmount: totalOrderAmount };
+    })
+    .sort((a, b) => b.totalAmount - a.totalAmount);
+  return {
+    yAxis: [{ scaleType: "band", dataKey: "state" }],
+    series: [
+      {
+        dataKey: "totalAmount",
+        label: "Total orders",
+      },
+    ],
+    layout: "horizontal",
+    dataset: ordersByState,
+  };
+}
+
+export function constructTotalDiscountBarChartProps(
+  orders: Order[],
+): BarChartProps {
+  const sortedByNamesTotalDiscount = orders.reduce(
+    (acc, order) => {
+      if (!acc[order.productName]) {
+        acc[order.productName] = [];
+      }
+      acc[order.productName].push(order);
+      return acc;
+    },
+    {} as Record<string, Order[]>,
+  );
+  const seriesTotalDiscount = Object.entries(sortedByNamesTotalDiscount)
+    .map(([name, ordersByProduct]) => {
+      const totalDiscount = ordersByProduct.reduce((acc, o) => {
+        if (!o.discount) {
+          return acc;
+        }
+        const discountValue = o.amount * (o.discount / 100);
+        return acc + discountValue;
+      }, 0);
+      const totalOrderAmount = ordersByProduct.reduce(
+        (acc, o) => acc + o.amount,
+        0,
+      );
+      const discountAsPercentage = (totalDiscount / totalOrderAmount) * 100;
+      return [
+        {
+          data: [discountAsPercentage],
+          stack: name,
+          label: `${name} (discount)`,
+        },
+        {
+          data: [100 - discountAsPercentage],
+          stack: name,
+          label: `${name} (rest)`,
+        },
+      ];
+    })
+    .flat();
+
+  return {
+    series: seriesTotalDiscount,
   };
 }
 

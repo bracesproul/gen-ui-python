@@ -18,6 +18,7 @@ import {
 } from "./filters";
 import { useSearchParams, useRouter } from "next/navigation";
 import { filterOrders } from "./filters";
+import { snakeCase } from "lodash";
 
 const LOCAL_STORAGE_ORDERS_KEY = "orders";
 
@@ -33,7 +34,7 @@ const getFiltersFromUrl = (
   const filters: Record<string, any> = {};
 
   filterKeys.forEach((key) => {
-    const value = searchParams.get(key);
+    const value = searchParams.get(snakeCase(key));
     if (value) {
       try {
         filters[key as any] = decodeURIComponent(value);
