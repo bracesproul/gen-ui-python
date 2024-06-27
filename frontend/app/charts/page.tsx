@@ -6,7 +6,7 @@ import { BarChart, LineChart, PieChart } from "@/lib/mui";
 import { Suspense, useEffect, useState } from "react";
 import { useActions } from "@/utils/client";
 import { EndpointsContext } from "./agent";
-import { Filter, Order, filterSchema } from "./ai/schema";
+import { Filter, Order, filterSchema } from "./schema";
 import { LocalContext } from "../shared";
 import { generateOrders } from "./generate-orders";
 import {
@@ -15,9 +15,9 @@ import {
   constructByDateLineChartProps,
   constructStatusPieChartProps,
   constructTotalAmountBarChartProps,
-} from "./ai/filters";
+} from "./filters";
 import { useSearchParams, useRouter } from "next/navigation";
-import { filterOrders } from "./ai/filters";
+import { filterOrders } from "./filters";
 
 const LOCAL_STORAGE_ORDERS_KEY = "orders";
 

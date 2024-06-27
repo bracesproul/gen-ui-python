@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Order } from "./ai/schema";
+import { Order } from "./schema";
 
 export function generateOrders(): Order[] {
   const orders: Order[] = [];

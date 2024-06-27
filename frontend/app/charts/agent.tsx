@@ -3,7 +3,7 @@ import {
   exposeEndpoints,
   EventHandlerFields,
 } from "@/utils/server";
-import { Filter, Order } from "./ai/schema";
+import { Filter, Order } from "./schema";
 import { Client } from "@langchain/langgraph-sdk";
 import { RunnableLambda } from "@langchain/core/runnables";
 import { StreamEvent } from "@langchain/core/tracers/log_stream";
@@ -11,7 +11,7 @@ import {
   ChartType,
   DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP,
   DataDisplayTypeAndDescription,
-} from "./ai/filters";
+} from "./filters";
 import { FilterButton } from "@/components/prebuilt/filter";
 import { format } from "date-fns";
 import { createStreamableUI } from "ai/rsc";
@@ -124,6 +124,9 @@ async function filterGraph(inputs: FilterGraphInput) {
 
   const client = new Client({
     apiUrl: process.env.LANGGRAPH_CLOUD_API_URL,
+    defaultHeaders: {
+      "X-API-KEY": process.env.LANGGRAPH_CLOUD_API_KEY,
+    },
   });
   const assistants = await client.assistants.search({
     metadata: null,
