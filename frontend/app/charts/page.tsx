@@ -212,7 +212,7 @@ function ChartContent() {
     });
 
     if (Object.keys(paramsToAdd).length === 0) return;
-    push(`/charts?${new URLSearchParams({ ...params, ...paramsToAdd })}`);
+    push(`/charts?${new URLSearchParams({ ...paramsToAdd })}`);
   }, [selectedFilters, searchParams, selectedChartType, push]);
 
   const handleSubmitSmartFilter = async (input: string) => {
