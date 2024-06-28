@@ -1,7 +1,8 @@
-langchain-core==0.2.9
+langchain-core>=0.2.10,<0.3
 langchain==0.2.5
 langchain-openai==0.1.9
 python-dotenv==1.0.1
 langgraph==0.1.1
 pydantic>=1.10.13,<2
 langchain-community==0.2.5
+langchain-anthropic==0.1.16

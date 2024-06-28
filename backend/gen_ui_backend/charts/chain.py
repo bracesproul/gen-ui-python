@@ -60,7 +60,9 @@ to be converted into a structured query.""",
         set(order["productName"].lower() for order in state["orders"])
     )
     schema = filter_schema(unique_product_names)
-    model = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(schema)
+    model = ChatOpenAI(model="gpt-4-turbo", temperature=0).with_structured_output(
+        schema
+    )
     chain = prompt | model
     result = chain.invoke(input=state["input"]["content"])
 
@@ -101,7 +103,7 @@ Generated filters: {selected_filters}""",
             ..., description="The type of chart to display the data."
         )
 
-    model = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(
+    model = ChatOpenAI(model="gpt-4-turbo", temperature=0).with_structured_output(
         ChartTypeSchema
     )
     chain = prompt | model
@@ -150,10 +152,10 @@ Generated filters: {selected_filters}""",
 
         display_format: str = Field(
             ...,
-            description=f"The format to display the data in. Must be one of {', '.join([item['name'] for item in state['display_formats'] if item['chartType'] == state['chart_type']])}",
+            description=f"The format to display the data in. Must be one of {', '.join([item['title'] for item in state['display_formats'] if item['chartType'] == state['chart_type']])}",
         )
 
-    model = ChatOpenAI(model="gpt-4o", temperature=0).with_structured_output(
+    model = ChatOpenAI(model="gpt-4-turbo", temperature=0).with_structured_output(
         DataDisplayFormatSchema
     )
     chain = prompt | model
