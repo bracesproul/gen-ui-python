@@ -106,7 +106,7 @@ def filter_schema(product_names: List[str]) -> Type[BaseModel]:
         )
         status: Optional[List[str]] = Field(
             None,
-            description="The current status(es) of the order to filter by. This field should only be populated if a user mentions a specific status. If a specific status was not mentioned, do NOT populate this field.",
+            description="The current status(es) of the order to filter by. This field should only be populated if a user mentions a specific status. If a specific status was not mentioned, do NOT populate this field. If populated, this field should ALWAYS be a list.",
             enum=[
                 "pending",
                 "processing",
