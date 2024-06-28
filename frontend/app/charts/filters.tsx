@@ -10,9 +10,9 @@ export type ChartType = "bar" | "line" | "pie";
 
 export type DataDisplayTypeAndDescription = {
   /**
-   * The name of the data display type.
+   * The title of the data display type.
    */
-  name: string;
+  title: string;
   /**
    * The type of chart which this format can be displayed on.
    */
@@ -24,277 +24,95 @@ export type DataDisplayTypeAndDescription = {
   /**
    * The function to use to construct the props for the chart.
    */
-  propsFunction: (
-    orders: Order[],
-  ) => BarChartProps | PieChartProps | LineChartProps;
+  propsFn: (orders: Order[]) => BarChartProps | PieChartProps | LineChartProps;
 };
 
-export const DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP: {
-  [name: string]: DataDisplayTypeAndDescription;
-} = {
-  totalAmount: {
-    name: "totalAmount",
-    description:
-      "Sort by total dollar amount of orders, grouping by product name.",
+export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
+  {
+    title: "Order Amount by Product Name",
     chartType: "bar",
-    propsFunction: constructTotalAmountBarChartProps,
-  },
-  state: {
-    name: "state",
     description:
-      "Sort by total dollar amount of orders, grouping by the state the order was shipped to.",
+      "X-axis: Product Name (productName)\nY-axis: Order Amount (amount)\nThis chart would show the total sales for each product.",
+    propsFn: constructProductSalesBarChartProps,
+  },
+  {
+    title: "Order Count by Status",
     chartType: "bar",
-    propsFunction: constructStateBarChartProps,
-  },
-  totalDiscount: {
-    name: "totalDiscount",
     description:
-      "Show the percentage of total order amount that was discounted, and the remaining percentage that was not discounted. Group by product name.",
+      "X-axis: Order Status (status)\nY-axis: Number of Orders\nThis chart would display the distribution of orders across different statuses.",
+    propsFn: constructOrderCountByStatusBarChartProps,
+  },
+  {
+    title: "Average Discount by Product Name",
     chartType: "bar",
-    propsFunction: constructTotalDiscountBarChartProps,
-  },
-  status: {
-    name: "status",
     description:
-      "Show the percentage of orders in each status, grouping by order status.",
-    chartType: "pie",
-    propsFunction: constructStatusPieChartProps,
+      "X-axis: Product Name (productName)\nY-axis: Average Discount Percentage (discount)\nThis chart would show which products have the highest average discounts.",
+    propsFn: constructAverageDiscountByProductBarChartProps,
   },
-  ordersByMonth: {
-    name: "ordersByMonth",
+  {
+    title: "Order Count by State",
+    chartType: "bar",
     description:
-      "Line chart where each line represents a product, and each point on the line represents the number of orders for that product in a given week. This should be used when displaying multiple products over time.",
+      "X-axis: State (address.state)\nY-axis: Number of Orders\nThis chart would visualize the geographic distribution of orders by state.",
+    propsFn: constructOrderCountByStateBarChartProps,
+  },
+  {
+    title: "Weekly Order Volume",
+    chartType: "bar",
+    description:
+      "X-axis: Date (orderedAt, grouped by week)\nY-axis: Number of Orders\nThis chart would show the trend of order volume over time, allowing you to identify peak ordering weeks.",
+    propsFn: constructWeeklyOrderVolumeBarChartProps,
+  },
+  {
+    title: "Order Amount Over Time",
     chartType: "line",
-    propsFunction: constructByDateLineChartProps,
+    description:
+      "X-axis: orderedAt (Date)\nY-axis: amount (Number)\nThis chart would show the trend of order amounts over time.",
+    propsFn: constructOrderAmountOverTimeLineChartProps,
   },
-};
-
-export function constructTotalAmountBarChartProps(
-  orders: Order[],
-): BarChartProps {
-  const sortedByNames = orders.reduce(
-    (acc, order) => {
-      if (!acc[order.productName]) {
-        acc[order.productName] = [];
-      }
-      acc[order.productName].push(order);
-      return acc;
-    },
-    {} as Record<string, Order[]>,
-  );
-  const ordersByProduct = Object.entries(sortedByNames)
-    .map(([name, orders]) => {
-      const totalOrderAmount = orders.reduce(
-        (acc, order) => acc + order.amount,
-        0,
-      );
-      return { name, totalAmount: totalOrderAmount };
-    })
-    .sort((a, b) => b.totalAmount - a.totalAmount);
-  return {
-    yAxis: [{ scaleType: "band", dataKey: "name" }],
-    series: [
-      {
-        dataKey: "totalAmount",
-        label: "Total orders",
-      },
-    ],
-    layout: "horizontal",
-    dataset: ordersByProduct,
-  };
-}
-
-export function constructStateBarChartProps(orders: Order[]): BarChartProps {
-  const sortedByState = orders.reduce(
-    (acc, order) => {
-      if (!acc[order.address.state]) {
-        acc[order.address.state] = [];
-      }
-      acc[order.address.state].push(order);
-      return acc;
-    },
-    {} as Record<string, Order[]>,
-  );
-  const ordersByState = Object.entries(sortedByState)
-    .map(([state, orders]) => {
-      const totalOrderAmount = orders.reduce(
-        (acc, order) => acc + order.amount,
-        0,
-      );
-      return { state, totalAmount: totalOrderAmount };
-    })
-    .sort((a, b) => b.totalAmount - a.totalAmount);
-  return {
-    yAxis: [{ scaleType: "band", dataKey: "state" }],
-    series: [
-      {
-        dataKey: "totalAmount",
-        label: "Total orders",
-      },
-    ],
-    layout: "horizontal",
-    dataset: ordersByState,
-  };
-}
-
-export function constructTotalDiscountBarChartProps(
-  orders: Order[],
-): BarChartProps {
-  const sortedByNamesTotalDiscount = orders.reduce(
-    (acc, order) => {
-      if (!acc[order.productName]) {
-        acc[order.productName] = [];
-      }
-      acc[order.productName].push(order);
-      return acc;
-    },
-    {} as Record<string, Order[]>,
-  );
-  const seriesTotalDiscount = Object.entries(sortedByNamesTotalDiscount)
-    .map(([name, ordersByProduct]) => {
-      const totalDiscount = ordersByProduct.reduce((acc, o) => {
-        if (!o.discount) {
-          return acc;
-        }
-        const discountValue = o.amount * (o.discount / 100);
-        return acc + discountValue;
-      }, 0);
-      const totalOrderAmount = ordersByProduct.reduce(
-        (acc, o) => acc + o.amount,
-        0,
-      );
-      const discountAsPercentage = (totalDiscount / totalOrderAmount) * 100;
-      return [
-        {
-          data: [discountAsPercentage],
-          stack: name,
-          label: `${name} (discount)`,
-        },
-        {
-          data: [100 - discountAsPercentage],
-          stack: name,
-          label: `${name} (rest)`,
-        },
-      ];
-    })
-    .flat();
-
-  return {
-    series: seriesTotalDiscount,
-  };
-}
-
-export function constructStatusPieChartProps(orders: Order[]): PieChartProps {
-  const totalOrdersForEachStatus = orders.reduce(
-    (acc, o) => {
-      if (!acc[o.status]) {
-        acc[o.status] = 1;
-      }
-      acc[o.status] += 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-  const seriesStatus = Object.entries(totalOrdersForEachStatus).map(
-    ([status, count], idx) => ({
-      id: idx,
-      value: count,
-      label: status,
-    }),
-  );
-
-  return {
-    series: [
-      {
-        data: seriesStatus,
-      },
-    ],
-  };
-}
-
-export function constructByDateLineChartProps(orders: Order[]): LineChartProps {
-  if (orders.length === 0) {
-    return { series: [], xAxis: [] };
-  }
-
-  const preProcessOrders = orders.map((order) => ({
-    ...order,
-    orderedAt: new Date(order.orderedAt),
-  }));
-
-  // Sort orders by date once
-  preProcessOrders.sort(
-    (a, b) => a.orderedAt.getTime() - b.orderedAt.getTime(),
-  );
-
-  const startDate = new Date(
-    preProcessOrders[0].orderedAt.getFullYear(),
-    preProcessOrders[0].orderedAt.getMonth(),
-    1,
-  );
-  const endDate = new Date(
-    preProcessOrders[preProcessOrders.length - 1].orderedAt.getFullYear(),
-    preProcessOrders[preProcessOrders.length - 1].orderedAt.getMonth(),
-    1,
-  );
-
-  // Pre-calculate month start dates
-  const monthStartDates: Date[] = [];
-  let currentDate = startDate;
-  while (currentDate <= endDate) {
-    monthStartDates.push(currentDate);
-    currentDate = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-      1,
-    );
-  }
-
-  // Create a map of product names to their order counts per month
-  const productOrderCounts: Record<string, number[]> = {};
-  const monthCount = monthStartDates.length;
-
-  preProcessOrders.forEach((order) => {
-    const { productName, orderedAt } = order;
-    const monthIndex =
-      (orderedAt.getFullYear() - startDate.getFullYear()) * 12 +
-      (orderedAt.getMonth() - startDate.getMonth());
-
-    if (!productOrderCounts[productName]) {
-      productOrderCounts[productName] = new Array(monthCount).fill(0);
-    }
-    productOrderCounts[productName][monthIndex]++;
-  });
-
-  const series: LineSeriesType[] = Object.keys(productOrderCounts).map(
-    (productName) => ({
-      dataKey: productName,
-      label: productName,
-      type: "line",
-    }),
-  );
-
-  const dataset = monthStartDates.map((date, index) => {
-    const dataPoint: { [key: string]: any } = { month: date };
-    Object.entries(productOrderCounts).forEach(([productName, orderCounts]) => {
-      dataPoint[productName] = orderCounts[index];
-    });
-    return dataPoint;
-  });
-
-  // Create the x-axis data for the line chart
-  const xAxis = [
-    {
-      dataKey: "month",
-    },
-  ];
-
-  return {
-    series,
-    xAxis,
-    dataset,
-  };
-}
+  {
+    title: "Discount Percentage Distribution",
+    chartType: "line",
+    description:
+      "X-axis: discount (Number, 0-100)\nY-axis: Count of orders with that discount (Number)\nThis chart would show the distribution of discounts across orders.\nExcludes orders which do not have a discount.",
+    propsFn: constructDiscountDistributionLineChartProps,
+  },
+  {
+    title: "Average Order Amount by Month",
+    chartType: "line",
+    description:
+      "X-axis: Month (derived from orderedAt)\nY-axis: Average amount (Number)\nThis chart would show how the average order amount changes month by month.",
+    propsFn: constructAverageOrderAmountByMonthLineChartProps,
+  },
+  {
+    title: "Order Status Distribution",
+    chartType: "pie",
+    description:
+      "Display each status (pending, processing, shipped, delivered, cancelled, returned) as a slice of the pie, with the size of each slice representing the number of orders in that status.\nThis provides a quick overview of the current state of all orders.",
+    propsFn: constructOrderStatusDistributionPieChartProps,
+  },
+  {
+    title: "Product Name Popularity",
+    chartType: "pie",
+    description:
+      "Show each unique productName as a slice, with the size representing the number of orders for that product.\nThis helps identify the most popular products in your store.",
+    propsFn: constructProductPopularityPieChartProps,
+  },
+  {
+    title: "State-wise Order Distribution",
+    chartType: "pie",
+    description:
+      "Use the address.state field to create slices for each state, with slice sizes representing the number of orders from that state.\nThis visualizes which cities generate the most orders.",
+    propsFn: constructDiscountDistributionPieChartProps,
+  },
+  {
+    title: "Quarterly Order Distribution",
+    chartType: "pie",
+    description:
+      "Groups orders by quarter using the orderedAt field, with each slice representing a quarter and its size showing the number of orders in that quarter.\nThis visualizes seasonal trends in order volume on a quarterly basis.",
+    propsFn: constructQuarterlyOrderDistributionPieChartProps,
+  },
+];
 
 export function filterOrders(state: {
   selectedFilters: Partial<Filter>;
@@ -649,7 +467,7 @@ export function constructOrderAmountOverTimeLineChartProps(
 X-axis: discount (Number, 0-100)
 Y-axis: Count of orders with that discount (Number)
 This chart would show the distribution of discounts across orders.
-Filters out orders which do not have a discount.
+Excludes orders which do not have a discount.
  */
 export function constructDiscountDistributionLineChartProps(
   orders: Order[],
@@ -758,7 +576,6 @@ export function constructAverageOrderAmountByMonthLineChartProps(
         scaleType: "time",
       },
     ],
-
     width: 800,
     height: 400,
     dataset,

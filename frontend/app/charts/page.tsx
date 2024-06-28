@@ -11,10 +11,10 @@ import { LocalContext } from "../shared";
 import { generateOrders } from "./generate-orders";
 import {
   ChartType,
-  DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP,
-  constructByDateLineChartProps,
-  constructStatusPieChartProps,
-  constructTotalAmountBarChartProps,
+  DISPLAY_FORMATS,
+  constructProductSalesBarChartProps,
+  constructOrderStatusDistributionPieChartProps,
+  constructOrderAmountOverTimeLineChartProps,
 } from "./filters";
 import { useSearchParams, useRouter } from "next/navigation";
 import { filterOrders } from "./filters";
@@ -122,7 +122,7 @@ function ChartContent() {
   const [elements, setElements] = useState<JSX.Element[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Partial<Filter>>();
-  const [selectedChartType, setSelectedChartType] = useState<ChartType>("pie");
+  const [selectedChartType, setSelectedChartType] = useState<ChartType>("bar");
 
   // Load the orders from local storage or generate them if they don't exist.
   useEffect(() => {
@@ -156,7 +156,7 @@ function ChartContent() {
       case "bar":
         setElements([
           <BarChart
-            {...constructTotalAmountBarChartProps(filteredOrders ?? ordersV)}
+            {...constructProductSalesBarChartProps(filteredOrders ?? ordersV)}
             key="start-bar"
           />,
         ]);
@@ -164,14 +164,18 @@ function ChartContent() {
       case "pie":
         return setElements([
           <PieChart
-            {...constructStatusPieChartProps(filteredOrders ?? ordersV)}
+            {...constructOrderStatusDistributionPieChartProps(
+              filteredOrders ?? ordersV,
+            )}
             key="start-pie"
           />,
         ]);
       case "line":
         return setElements([
           <LineChart
-            {...constructByDateLineChartProps(filteredOrders ?? ordersV)}
+            {...constructOrderAmountOverTimeLineChartProps(
+              filteredOrders ?? ordersV,
+            )}
             key="start-line"
           />,
         ]);
@@ -221,10 +225,8 @@ function ChartContent() {
     const element = await actions.filterGraph({
       input,
       orders,
-      display_formats: Object.values(
-        DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP,
-      ).map((d) => ({
-        name: d.name,
+      display_formats: DISPLAY_FORMATS.map((d) => ({
+        title: d.title,
         description: d.description,
         chartType: d.chartType,
       })),

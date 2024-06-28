@@ -9,7 +9,7 @@ import { RunnableLambda } from "@langchain/core/runnables";
 import { StreamEvent } from "@langchain/core/tracers/log_stream";
 import {
   ChartType,
-  DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP,
+  DISPLAY_FORMATS,
   DataDisplayTypeAndDescription,
 } from "./filters";
 import { FilterButton } from "@/components/prebuilt/filter";
@@ -33,7 +33,7 @@ import { LAMBDA_STREAM_WRAPPER_NAME } from "@/utils/server";
 type FilterGraphInput = {
   input: string;
   orders: Order[];
-  display_formats: Omit<DataDisplayTypeAndDescription, "propsFunction">[];
+  display_formats: Omit<DataDisplayTypeAndDescription, "propsFn">[];
 };
 type FilterGraphRunnableInput = Omit<FilterGraphInput, "input"> & {
   input: { content: string };
@@ -106,10 +106,16 @@ function handleConstructingCharts(
   },
   ui: CreateStreamableUIReturnType,
 ) {
-  const displayDataObj =
-    DATA_DISPLAY_TYPES_AND_DESCRIPTIONS_MAP[input.displayFormat];
+  const displayDataObj = DISPLAY_FORMATS.find(
+    (d) => d.title === input.displayFormat,
+  );
+  if (!displayDataObj) {
+    throw new Error(
+      `Display format ${input.displayFormat} not found in DISPLAY_FORMATS`,
+    );
+  }
 
-  const props = displayDataObj.propsFunction(input.orders);
+  const props = displayDataObj.propsFn(input.orders);
   if (input.chartType === "bar") {
     ui.update(<BarChart {...(props as BarChartProps)} />);
   } else if (input.chartType === "pie") {
