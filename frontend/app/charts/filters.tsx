@@ -403,8 +403,6 @@ export function constructProductSalesBarChartProps(
         label: "Total Sales",
       },
     ],
-    width: 800,
-    height: 400,
     dataset,
   };
 }
@@ -435,7 +433,6 @@ export function constructOrderCountByStatusBarChartProps(
     yAxis: [
       {
         scaleType: "linear",
-        valueFormatter: (value) => value.toString(),
       },
     ],
     series: [
@@ -444,8 +441,6 @@ export function constructOrderCountByStatusBarChartProps(
         label: "Number of Orders",
       },
     ],
-    width: 800,
-    height: 400,
     dataset,
   };
 }
@@ -494,8 +489,6 @@ export function constructAverageDiscountByProductBarChartProps(
         label: "Average Discount",
       },
     ],
-    width: 800,
-    height: 400,
     dataset,
   };
 }
@@ -527,7 +520,6 @@ export function constructOrderCountByStateBarChartProps(
     yAxis: [
       {
         scaleType: "linear",
-        valueFormatter: (value) => value.toString(),
       },
     ],
     series: [
@@ -536,8 +528,6 @@ export function constructOrderCountByStateBarChartProps(
         label: "Number of Orders",
       },
     ],
-    width: 800,
-    height: 400,
     dataset,
   };
 }
@@ -583,15 +573,10 @@ export function constructWeeklyOrderVolumeBarChartProps(
       {
         scaleType: "band",
         dataKey: "weekStart",
-        label: "Week Starting",
         tickLabelStyle: {
           angle: 45,
           textAnchor: "start",
           dominantBaseline: "hanging",
-        },
-        valueFormatter: (value) => {
-          const date = new Date(value);
-          return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
         },
       },
     ],
@@ -608,8 +593,6 @@ export function constructWeeklyOrderVolumeBarChartProps(
         label: "Order Count",
       },
     ],
-    width: 800,
-    height: 400,
     dataset,
   };
 }
@@ -650,7 +633,6 @@ export function constructOrderAmountOverTimeLineChartProps(
       {
         dataKey: "date",
         scaleType: "time",
-        valueFormatter: (value: Date) => value.toLocaleDateString(),
       },
     ],
     yAxis: [
@@ -658,8 +640,6 @@ export function constructOrderAmountOverTimeLineChartProps(
         label: "Amount ($)",
       },
     ],
-    width: 800,
-    height: 400,
     dataset,
   };
 }
@@ -709,18 +689,14 @@ export function constructDiscountDistributionLineChartProps(
         dataKey: "discountPercentage",
         label: "Discount Percentage",
         scaleType: "linear",
-        valueFormatter: (value: number) => `${value}%`,
       },
     ],
     yAxis: [
       {
         label: "Number of Orders",
         scaleType: "linear",
-        valueFormatter: (value: number) => value.toString(),
       },
     ],
-    width: 800,
-    height: 400,
     dataset,
   };
 }
@@ -780,19 +756,9 @@ export function constructAverageOrderAmountByMonthLineChartProps(
       {
         dataKey: "month",
         scaleType: "time",
-        valueFormatter: (value: Date) =>
-          value.toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-          }),
       },
     ],
-    yAxis: [
-      {
-        label: "Average Amount ($)",
-        valueFormatter: (value: number) => `$${value.toFixed(2)}`,
-      },
-    ],
+
     width: 800,
     height: 400,
     dataset,
