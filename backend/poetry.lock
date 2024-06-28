@@ -1776,6 +1776,20 @@ files = [
 langchain-core = ">=0.2,<0.3"
 
 [[package]]
+name = "langgraph-cli"
+version = "0.1.46"
+description = "CLI for interacting with LangGraph API"
+optional = false
+python-versions = "<4.0.0,>=3.9.0"
+files = [
+    {file = "langgraph_cli-0.1.46-py3-none-any.whl", hash = "sha256:b3ae525c448cc0dfe6bcc56ec25c9e286056591c8fa17b716dfff02c943a16d4"},
+    {file = "langgraph_cli-0.1.46.tar.gz", hash = "sha256:1dbb42c30d40d8c0bad68daf2b17fa05f8c9f25c20159cbf8e5c4fb8653db7fd"},
+]
+
+[package.dependencies]
+click = ">=8.1.7,<9.0.0"
+
+[[package]]
 name = "langserve"
 version = "0.2.1"
 description = ""
@@ -5716,4 +5730,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "<3.12,>=3.9.0"
-content-hash = "83c2f0b8d406ee9ec9d9b61674f173701e1de4cf942396b425488da2276b760b"
+content-hash = "b4eef837d40ef520286516d42c3ac11e4c323a43d10972356e6f7b24a7c31df7"

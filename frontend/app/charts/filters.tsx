@@ -2,7 +2,6 @@ import {
   PieChartProps,
   BarChartProps,
   LineChartProps,
-  LineSeriesType,
 } from "@/lib/mui";
 import { Filter, Order } from "./schema";
 

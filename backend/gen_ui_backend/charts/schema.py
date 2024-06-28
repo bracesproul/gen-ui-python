@@ -121,7 +121,7 @@ def filter_schema(product_names: List[str]) -> Type[BaseModel]:
 
 
 class DataDisplayTypeAndDescription(BaseModel):
-    name: str = Field(..., description="The name of the data display type.")
+    title: str = Field(..., description="The title of the data display type.")
     chartType: ChartType = Field(
         ..., description="The type of chart which this format can be displayed on."
     )
