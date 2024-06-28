@@ -2,7 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BarChart, LineChart, PieChart } from "@/lib/mui";
+import {
+  BarChart,
+  BarChartProps,
+  LineChart,
+  LineChartProps,
+  PieChart,
+  PieChartProps,
+} from "@/lib/mui";
 import { Suspense, useEffect, useState } from "react";
 import { useActions } from "@/utils/client";
 import { EndpointsContext } from "./agent";
@@ -15,6 +22,7 @@ import {
   constructProductSalesBarChartProps,
   constructOrderStatusDistributionPieChartProps,
   constructOrderAmountOverTimeLineChartProps,
+  DataDisplayTypeAndDescription,
 } from "./filters";
 import { useSearchParams, useRouter } from "next/navigation";
 import { filterOrders } from "./filters";
@@ -125,6 +133,9 @@ function ChartContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Partial<Filter>>();
   const [selectedChartType, setSelectedChartType] = useState<ChartType>("bar");
+  const [currentFilter, setCurrentFilter] = useState("");
+  const [currentDisplayFormat, setCurrentDisplayFormat] =
+    useState<DataDisplayTypeAndDescription>();
 
   // Load the orders from local storage or generate them if they don't exist.
   useEffect(() => {
@@ -156,28 +167,74 @@ function ChartContent() {
     });
     switch (selectedChart) {
       case "bar":
-        setElements([
+        const displayFormatKeyBar = "bar_order_amount_by_product";
+        const displayFormatBar = DISPLAY_FORMATS.find(
+          (d) => d.key === displayFormatKeyBar,
+        );
+        if (!displayFormatBar) {
+          throw new Error("Something went wrong.");
+        }
+        return setElements([
+          <div className="mt-4 mb-6 text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              {displayFormatBar.title}
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm leading-relaxed">
+              {displayFormatBar.description}
+            </p>
+          </div>,
           <BarChart
-            {...constructProductSalesBarChartProps(filteredOrders ?? ordersV)}
+            {...(displayFormatBar.propsFn(
+              filteredOrders ?? ordersV,
+            ) as BarChartProps)}
             key="start-bar"
           />,
         ]);
-        break;
       case "pie":
+        const displayFormatKeyPie = "pie_order_status_distribution";
+        const displayFormatPie = DISPLAY_FORMATS.find(
+          (d) => d.key === displayFormatKeyPie,
+        );
+        if (!displayFormatPie) {
+          throw new Error("Something went wrong.");
+        }
         return setElements([
+          <div className="mt-4 mb-6 text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              {displayFormatPie.title}
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm leading-relaxed">
+              {displayFormatPie.description}
+            </p>
+          </div>,
           <PieChart
-            {...constructOrderStatusDistributionPieChartProps(
+            {...(displayFormatPie.propsFn(
               filteredOrders ?? ordersV,
-            )}
+            ) as PieChartProps)}
             key="start-pie"
           />,
         ]);
       case "line":
+        const displayFormatKeyLine = "line_order_amount_over_time";
+        const displayFormatLine = DISPLAY_FORMATS.find(
+          (d) => d.key === displayFormatKeyLine,
+        );
+        if (!displayFormatLine) {
+          throw new Error("Something went wrong.");
+        }
         return setElements([
+          <div className="mt-4 mb-6 text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              {displayFormatLine.title}
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm leading-relaxed">
+              {displayFormatLine.description}
+            </p>
+          </div>,
           <LineChart
-            {...constructOrderAmountOverTimeLineChartProps(
+            {...(displayFormatLine.propsFn(
               filteredOrders ?? ordersV,
-            )}
+            ) as LineChartProps)}
             key="start-line"
           />,
         ]);
@@ -223,7 +280,7 @@ function ChartContent() {
 
   const handleSubmitSmartFilter = async (input: string) => {
     setLoading(true);
-
+    setCurrentFilter(input);
     const element = await actions.filterGraph({
       input,
       orders,
@@ -250,7 +307,7 @@ function ChartContent() {
         throw new Error("lastEvent is an array. Something has gone wrong.");
       }
 
-      const { selected_filters, chart_type } = lastEvent;
+      const { selected_filters, chart_type, display_format } = lastEvent;
       if (selected_filters) {
         setSelectedFilters(
           Object.fromEntries(
@@ -261,6 +318,12 @@ function ChartContent() {
             }),
           ),
         );
+      }
+      const displayFormat = DISPLAY_FORMATS.find(
+        (d) => d.key === display_format,
+      );
+      if (displayFormat) {
+        setCurrentDisplayFormat(displayFormat);
       }
       setSelectedChartType(chart_type);
       setLoading(false);
@@ -278,6 +341,9 @@ function ChartContent() {
           <div className="ml-auto w-[300px]">
             <SmartFilter loading={loading} onSubmit={handleSubmitSmartFilter} />
           </div>
+        </div>
+        <div className="flex items-center justify-center mx-auto">
+          <h2 className="text-2xl font-bold">{currentFilter}</h2>
         </div>
         <div className="w-3xl h-[500px]">{elements}</div>
       </LocalContext.Provider>

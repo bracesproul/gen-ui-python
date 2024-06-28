@@ -114,15 +114,64 @@ function handleConstructingCharts(
       `Display format ${input.displayFormat} not found in DISPLAY_FORMATS`,
     );
   }
-
+  let barChart;
   const props = displayDataObj.propsFn(input.orders);
   if (input.chartType === "bar") {
-    ui.update(<BarChart {...(props as BarChartProps)} />);
+    barChart = <BarChart {...(props as BarChartProps)} />;
   } else if (input.chartType === "pie") {
-    ui.update(<PieChart {...(props as PieChartProps)} />);
+    barChart = <PieChart {...(props as PieChartProps)} />;
   } else if (input.chartType === "line") {
-    ui.update(<LineChart {...(props as LineChartProps)} />);
+    barChart = <LineChart {...(props as LineChartProps)} />;
   }
+  ui.update(
+    <>
+      <div className="mt-4 mb-6 text-center">
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          {displayDataObj.title}
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto text-sm leading-relaxed">
+          {displayDataObj.description}
+        </p>
+      </div>
+      {barChart}
+    </>,
+  );
+}
+
+function handleDisplayFormat(
+  displayFormat: string,
+  selectedChart: ChartType,
+  ui: CreateStreamableUIReturnType,
+) {
+  const displayDataObj = DISPLAY_FORMATS.find((d) => d.key === displayFormat);
+  if (!displayDataObj) {
+    throw new Error(
+      `Display format ${displayFormat} not found in DISPLAY_FORMATS`,
+    );
+  }
+  let loadingChart;
+  if (selectedChart === "bar") {
+    loadingChart = <LoadingBarChart />;
+  } else if (selectedChart === "pie") {
+    loadingChart = <LoadingPieChart />;
+  } else if (selectedChart === "line") {
+    loadingChart = <LoadingLineChart />;
+  } else {
+    throw new Error("Invalid chart type");
+  }
+  ui.update(
+    <>
+      <div className="mt-4 mb-6 text-center">
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">
+          {displayDataObj.title}
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto text-sm leading-relaxed">
+          {displayDataObj.description}
+        </p>
+      </div>
+      {loadingChart}
+    </>,
+  );
 }
 
 async function filterGraph(inputs: FilterGraphInput) {
@@ -177,6 +226,7 @@ async function filterGraph(inputs: FilterGraphInput) {
       return handleChartType(chartType, fields.ui);
     } else if (name === "generate_data_display_format") {
       displayFormat = data.output.display_format;
+      return handleDisplayFormat(displayFormat, chartType, fields.ui);
     } else if (name === "filter_data") {
       const { orders } = data.output;
       if (!chartType || !displayFormat) {
