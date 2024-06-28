@@ -106,8 +106,9 @@ function handleConstructingCharts(
   },
   ui: CreateStreamableUIReturnType,
 ) {
-  const displayDataObj =
-  DISPLAY_FORMATS.find((d) => d.title === input.displayFormat);
+  const displayDataObj = DISPLAY_FORMATS.find(
+    (d) => d.title === input.displayFormat,
+  );
   if (!displayDataObj) {
     throw new Error(
       `Display format ${input.displayFormat} not found in DISPLAY_FORMATS`,

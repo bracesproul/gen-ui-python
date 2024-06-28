@@ -19,6 +19,8 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { filterOrders } from "./filters";
 import { snakeCase } from "lodash";
+import { DisplayTypesDialog } from "@/components/prebuilt/display-types-dialog";
+import { FilterOptionsDialog } from "@/components/prebuilt/filter-options-dialog";
 
 const LOCAL_STORAGE_ORDERS_KEY = "orders";
 
@@ -268,6 +270,8 @@ function ChartContent() {
     <div className="min-w-[80vw] mx-auto">
       <LocalContext.Provider value={handleSubmitSmartFilter}>
         <div className="flex flex-row w-full gap-1 items-center justify-center px-12">
+          <FilterOptionsDialog />
+          <DisplayTypesDialog displayTypes={DISPLAY_FORMATS} />
           <div className="ml-auto w-[300px]">
             <SmartFilter loading={loading} onSubmit={handleSubmitSmartFilter} />
           </div>

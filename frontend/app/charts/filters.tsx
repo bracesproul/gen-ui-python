@@ -1,8 +1,4 @@
-import {
-  PieChartProps,
-  BarChartProps,
-  LineChartProps,
-} from "@/lib/mui";
+import { PieChartProps, BarChartProps, LineChartProps } from "@/lib/mui";
 import { Filter, Order } from "./schema";
 
 export type ChartType = "bar" | "line" | "pie";
