@@ -35,12 +35,12 @@ class AgentExecutorState(TypedDict, total=False):
 
 def format_data_display_types_and_descriptions(
     data_display_types_and_descriptions: List[DataDisplayTypeAndDescription],
-    selected_chart_type: ChartType
+    selected_chart_type: Optional[ChartType] = None,
 ) -> List[str]:
     return [
         f"Title: {item['title']}. Chart type: {item['chartType']}. Description: {item['description']}"
         for item in data_display_types_and_descriptions
-        if item['chartType'] == selected_chart_type
+        if selected_chart_type is None or item["chartType"] == selected_chart_type
     ]
 
 
@@ -163,8 +163,7 @@ Generated filters: {selected_filters}""",
             "magic_filter_input": state["input"]["content"],
             "selected_filters": state["selected_filters"],
             "data_display_types_and_descriptions": format_data_display_types_and_descriptions(
-                state["display_formats"],
-                state["chart_type"]
+                state["display_formats"], state["chart_type"]
             ),
         }
     )
@@ -207,11 +206,10 @@ def filter_data(state: AgentExecutorState) -> AgentExecutorState:
             is_match = False
         if max_amount is not None and order.get("amount", 0) > max_amount:
             is_match = False
-        if (
-            order_state
-            and order.get("address", {}).get("state", "").lower() != order_state.lower()
-        ):
-            is_match = False
+        if order_state:
+            order_state_lower = order.get("address", {}).get("state", "").lower()
+            if not any(state.lower() == order_state_lower for state in order_state):
+                is_match = False
         if discount is not None:
             order_has_discount = "discount" in order and order["discount"] is not None
             if order_has_discount != discount:
@@ -220,8 +218,10 @@ def filter_data(state: AgentExecutorState) -> AgentExecutorState:
             order_discount = order.get("discount")
             if order_discount is None or order_discount < min_discount_percentage:
                 is_match = False
-        if status and order.get("status", "").lower() != status.lower():
-            is_match = False
+        if status:
+            order_status_lower = order.get("status", "").lower()
+            if not any(s.lower() == order_status_lower for s in status):
+                is_match = False
 
         if is_match:
             filtered_orders.append(order)
