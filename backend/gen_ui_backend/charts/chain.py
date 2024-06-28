@@ -150,7 +150,7 @@ Generated filters: {selected_filters}""",
     class DataDisplayFormatSchema(BaseModel):
         """Choose the best format to display the data based on the filters and chart type."""
 
-        display_format_key: str = Field(
+        display_key: str = Field(
             ...,
             description=f"The key of the format to display the data in. Must be one of {', '.join([item['key'] for item in state['display_formats'] if item['chartType'] == state['chart_type']])}",
         )
@@ -171,7 +171,7 @@ Generated filters: {selected_filters}""",
     )
 
     return {
-        "display_format": result.display_format,
+        "display_format": result.display_key,
     }
 
 
