@@ -5,6 +5,10 @@ export type ChartType = "bar" | "line" | "pie";
 
 export type DataDisplayTypeAndDescription = {
   /**
+   * A unique key to identify the data display type.
+   */
+  key: string;
+  /**
    * The title of the data display type.
    */
   title: string;
@@ -24,6 +28,7 @@ export type DataDisplayTypeAndDescription = {
 
 export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
   {
+    key: "bar_order_amount_by_product",
     title: "Order Amount by Product Name",
     chartType: "bar",
     description:
@@ -31,6 +36,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructProductSalesBarChartProps,
   },
   {
+    key: "bar_order_count_by_status",
     title: "Order Count by Status",
     chartType: "bar",
     description:
@@ -38,6 +44,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructOrderCountByStatusBarChartProps,
   },
   {
+    key: "bar_average_discount_by_product",
     title: "Average Discount by Product Name",
     chartType: "bar",
     description:
@@ -45,6 +52,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructAverageDiscountByProductBarChartProps,
   },
   {
+    key: "bar_order_count_by_state",
     title: "Order Count by State",
     chartType: "bar",
     description:
@@ -52,6 +60,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructOrderCountByStateBarChartProps,
   },
   {
+    key: "bar_weekly_order_volume",
     title: "Weekly Order Volume",
     chartType: "bar",
     description:
@@ -59,6 +68,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructWeeklyOrderVolumeBarChartProps,
   },
   {
+    key: "line_order_amount_over_time",
     title: "Order Amount Over Time",
     chartType: "line",
     description:
@@ -66,6 +76,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructOrderAmountOverTimeLineChartProps,
   },
   {
+    key: "line_discount_percentage_distribution",
     title: "Discount Percentage Distribution",
     chartType: "line",
     description:
@@ -73,6 +84,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructDiscountDistributionLineChartProps,
   },
   {
+    key: "line_average_order_amount_by_month",
     title: "Average Order Amount by Month",
     chartType: "line",
     description:
@@ -80,6 +92,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructAverageOrderAmountByMonthLineChartProps,
   },
   {
+    key: "pie_order_status_distribution",
     title: "Order Status Distribution",
     chartType: "pie",
     description:
@@ -87,6 +100,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructOrderStatusDistributionPieChartProps,
   },
   {
+    key: "pie_product_name_popularity",
     title: "Product Name Popularity",
     chartType: "pie",
     description:
@@ -94,6 +108,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructProductPopularityPieChartProps,
   },
   {
+    key: "pie_state_wise_order_distribution",
     title: "State-wise Order Distribution",
     chartType: "pie",
     description:
@@ -101,6 +116,7 @@ export const DISPLAY_FORMATS: Array<DataDisplayTypeAndDescription> = [
     propsFn: constructDiscountDistributionPieChartProps,
   },
   {
+    key: "pie_quarterly_order_distribution",
     title: "Quarterly Order Distribution",
     chartType: "pie",
     description:

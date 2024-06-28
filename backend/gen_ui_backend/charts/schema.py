@@ -128,6 +128,7 @@ class DataDisplayTypeAndDescription(BaseModel):
     description: str = Field(
         ..., description="The description of the data display type."
     )
+    key: str = Field(..., description="The key of the data display type.")
 
     class Config:
         allow_population_by_field_name = True

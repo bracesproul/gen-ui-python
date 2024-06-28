@@ -38,7 +38,7 @@ def format_data_display_types_and_descriptions(
     selected_chart_type: Optional[ChartType] = None,
 ) -> List[str]:
     return [
-        f"Title: {item['title']}. Chart type: {item['chartType']}. Description: {item['description']}"
+        f"Key: {item['key']}. Title: {item['title']}. Chart type: {item['chartType']}. Description: {item['description']}"
         for item in data_display_types_and_descriptions
         if selected_chart_type is None or item["chartType"] == selected_chart_type
     ]
@@ -136,7 +136,7 @@ This chart has the following formats of which it can display the data: {data_dis
 The user will provide you with their original input to the 'magic filter' prompt, and the filters which have been generated based on their input.
 You should use these inputs as context when making a decision on the best format to display the data.
 
-Select the best display format to show the data based on the filters, chart type and user input.""",
+Select the best display format to show the data based on the filters, chart type and user input. You should always use the display type 'key' when selecting the format.""",
             ),
             (
                 "human",
@@ -150,9 +150,9 @@ Generated filters: {selected_filters}""",
     class DataDisplayFormatSchema(BaseModel):
         """Choose the best format to display the data based on the filters and chart type."""
 
-        display_format: str = Field(
+        display_format_key: str = Field(
             ...,
-            description=f"The format to display the data in. Must be one of {', '.join([item['title'] for item in state['display_formats'] if item['chartType'] == state['chart_type']])}",
+            description=f"The key of the format to display the data in. Must be one of {', '.join([item['key'] for item in state['display_formats'] if item['chartType'] == state['chart_type']])}",
         )
 
     model = ChatOpenAI(model="gpt-4-turbo", temperature=0).with_structured_output(

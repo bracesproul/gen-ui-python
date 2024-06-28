@@ -231,6 +231,7 @@ function ChartContent() {
         title: d.title,
         description: d.description,
         chartType: d.chartType,
+        key: d.key,
       })),
     });
 
@@ -250,15 +251,17 @@ function ChartContent() {
       }
 
       const { selected_filters, chart_type } = lastEvent;
-      setSelectedFilters(
-        Object.fromEntries(
-          Object.entries(selected_filters).filter(([key, value]) => {
-            return (
-              value !== undefined && value !== null && key in selected_filters
-            );
-          }),
-        ),
-      );
+      if (selected_filters) {
+        setSelectedFilters(
+          Object.fromEntries(
+            Object.entries(selected_filters).filter(([key, value]) => {
+              return (
+                value !== undefined && value !== null && key in selected_filters
+              );
+            }),
+          ),
+        );
+      }
       setSelectedChartType(chart_type);
       setLoading(false);
     })();
