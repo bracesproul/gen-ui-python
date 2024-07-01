@@ -413,7 +413,6 @@ export function constructWeeklyOrderVolumeBarChartProps(
       {
         scaleType: "linear",
         label: "Number of Orders",
-        valueFormatter: (value) => value.toString(),
       },
     ],
     series: [
