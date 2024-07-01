@@ -90,9 +90,9 @@ def filter_schema(product_names: List[str]) -> Type[BaseModel]:
         max_amount: Optional[float] = Field(
             None, description="The maximum amount of the order to filter by."
         )
-        state: Optional[str] = Field(
+        state: Optional[List[str]] = Field(
             None,
-            description="Filter orders by the state the order was placed in. Example: 'California'",
+            description="Filter orders by the state(s) the order was placed in. Example: ['California', 'New York']",
         )
         discount: Optional[bool] = Field(
             None,
@@ -104,9 +104,9 @@ def filter_schema(product_names: List[str]) -> Type[BaseModel]:
             le=100,
             description="Filter orders which had at least this amount discounted (in percentage)",
         )
-        status: Optional[str] = Field(
+        status: Optional[List[str]] = Field(
             None,
-            description="The current status of the order.",
+            description="The current status(es) of the order to filter by. This field should only be populated if a user mentions a specific status. If a specific status was not mentioned, do NOT populate this field. If populated, this field should ALWAYS be a list.",
             enum=[
                 "pending",
                 "processing",
@@ -121,13 +121,14 @@ def filter_schema(product_names: List[str]) -> Type[BaseModel]:
 
 
 class DataDisplayTypeAndDescription(BaseModel):
-    name: str = Field(..., description="The name of the data display type.")
+    title: str = Field(..., description="The title of the data display type.")
     chartType: ChartType = Field(
         ..., description="The type of chart which this format can be displayed on."
     )
     description: str = Field(
         ..., description="The description of the data display type."
     )
+    key: str = Field(..., description="The key of the data display type.")
 
     class Config:
         allow_population_by_field_name = True
